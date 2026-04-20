@@ -9,6 +9,24 @@
     registryNode: "ppwf:registry"
     // holds a JSON map<key, nodeId>
   };
+  function loadRegistry() {
+    const raw = figma.root.getPluginData(PD.registryNode);
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw);
+    } catch (_) {
+      return {};
+    }
+  }
+  function saveRegistry(reg) {
+    figma.root.setPluginData(PD.registryNode, JSON.stringify(reg));
+  }
+  function remember(key, node) {
+    const reg = loadRegistry();
+    reg[key] = node.id;
+    saveRegistry(reg);
+    node.setPluginData(PD.nodeId, key);
+  }
 
   // src/lib/fonts.ts
   var FONT_FALLBACKS = ["Segoe UI Variable", "Segoe UI", "Inter", "Roboto"];
@@ -138,7 +156,7 @@
   ];
   async function getOrCreateCollection() {
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
-    let col = collections.find((c) => c.name === COLLECTION_NAME);
+    let col = collections.find((c2) => c2.name === COLLECTION_NAME);
     if (!col) {
       col = figma.variables.createVariableCollection(COLLECTION_NAME);
     }
@@ -268,12 +286,20 @@
     return f;
   }
   function rect(name, w, h, parent) {
-    const r = figma.createRectangle();
-    r.name = name;
-    r.resizeWithoutConstraints(Math.max(1, w), Math.max(1, h));
-    r.fills = [];
-    if (parent) parent.appendChild(r);
-    return r;
+    const r2 = figma.createRectangle();
+    r2.name = name;
+    r2.resizeWithoutConstraints(Math.max(1, w), Math.max(1, h));
+    r2.fills = [];
+    if (parent) parent.appendChild(r2);
+    return r2;
+  }
+  function ellipse(name, w, h, parent) {
+    const e = figma.createEllipse();
+    e.name = name;
+    e.resizeWithoutConstraints(Math.max(1, w), Math.max(1, h));
+    e.fills = [];
+    if (parent) parent.appendChild(e);
+    return e;
   }
   async function text(str, weight, size, parent) {
     const t = figma.createText();
@@ -354,9 +380,9 @@
       const group = frame(name, radiusRow);
       autoLayout(group, "v", 6, 0);
       group.counterAxisAlignItems = "CENTER";
-      const r = Math.min(24, Number(variable.valuesByMode[tokens.lightMode]) || 0);
+      const r2 = Math.min(24, Number(variable.valuesByMode[tokens.lightMode]) || 0);
       const box = rect("box", 56, 56, group);
-      box.cornerRadius = r;
+      box.cornerRadius = r2;
       bindFillVar(box, tokens, "color/brand/primary");
       bindStrokeColorVar(box, tokens, "color/stroke/default");
       const lab = await text(name.replace("radius/", ""), "semibold", 11, group);
@@ -443,9 +469,418 @@
     node.fills = [bound];
   }
 
+  // src/lib/icons.ts
+  var p = (d, fill = "currentColor") => `<path d="${d}" fill="${fill}"/>`;
+  var r = (x, y, w, h, rx = 0) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="currentColor"/>`;
+  var c = (cx, cy, r2) => `<circle cx="${cx}" cy="${cy}" r="${r2}" fill="currentColor"/>`;
+  var ICONS = [
+    // ----- Navigation -----
+    { name: "home", group: "nav", svg: p("M10 2 L17 8 L17 17 L13 17 L13 12 L7 12 L7 17 L3 17 L3 8 Z") },
+    { name: "menu", group: "nav", svg: r(3, 5, 14, 1.5, 0.5) + r(3, 9.25, 14, 1.5, 0.5) + r(3, 13.5, 14, 1.5, 0.5) },
+    { name: "search", group: "nav", svg: p("M9 3a6 6 0 1 0 3.6 10.8l3.3 3.3 1.4-1.4-3.3-3.3A6 6 0 0 0 9 3Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z") },
+    { name: "chevron-right", group: "nav", svg: p("M7 3 L14 10 L7 17 L5.6 15.6 L11.2 10 L5.6 4.4 Z") },
+    { name: "chevron-down", group: "nav", svg: p("M3 7 L10 14 L17 7 L15.6 5.6 L10 11.2 L4.4 5.6 Z") },
+    { name: "chevron-up", group: "nav", svg: p("M3 13 L10 6 L17 13 L15.6 14.4 L10 8.8 L4.4 14.4 Z") },
+    { name: "chevron-left", group: "nav", svg: p("M13 3 L6 10 L13 17 L14.4 15.6 L8.8 10 L14.4 4.4 Z") },
+    { name: "arrow-left", group: "nav", svg: p("M10 3 L2 10 L10 17 L11.4 15.6 L6 11 L18 11 L18 9 L6 9 L11.4 4.4 Z") },
+    { name: "arrow-right", group: "nav", svg: p("M10 3 L18 10 L10 17 L8.6 15.6 L14 11 L2 11 L2 9 L14 9 L8.6 4.4 Z") },
+    { name: "more-horizontal", group: "nav", svg: c(5, 10, 1.5) + c(10, 10, 1.5) + c(15, 10, 1.5) },
+    { name: "more-vertical", group: "nav", svg: c(10, 5, 1.5) + c(10, 10, 1.5) + c(10, 15, 1.5) },
+    // ----- Actions -----
+    { name: "add", group: "action", svg: r(9, 3, 2, 14, 0.5) + r(3, 9, 14, 2, 0.5) },
+    { name: "close", group: "action", svg: p("M4 5.4 L5.4 4 L10 8.6 L14.6 4 L16 5.4 L11.4 10 L16 14.6 L14.6 16 L10 11.4 L5.4 16 L4 14.6 L8.6 10 Z") },
+    { name: "edit", group: "action", svg: p("M3 14 L13 4 L16 7 L6 17 L3 17 Z M12 5 L15 8") },
+    { name: "delete", group: "action", svg: p("M7 3 L13 3 L13 4 L16 4 L16 6 L4 6 L4 4 L7 4 Z M5 7 L15 7 L14 17 L6 17 Z") },
+    { name: "save", group: "action", svg: p("M3 3 H14 L17 6 V17 H3 Z M6 3 V8 H13 V3 M6 12 H14 V17 H6 Z") },
+    { name: "copy", group: "action", svg: p("M5 3 H13 V13 H5 Z M7 5 H15 V15 H7 M5 11 V15 H11") },
+    { name: "share", group: "action", svg: c(5, 10, 2) + c(15, 5, 2) + c(15, 15, 2) + p("M6.5 9 L13.5 6 M6.5 11 L13.5 14", "none") },
+    { name: "send", group: "action", svg: p("M3 3 L17 10 L3 17 L5 10 Z") },
+    { name: "upload", group: "action", svg: p("M10 3 L16 9 L13 9 L13 13 L7 13 L7 9 L4 9 Z M3 15 H17 V17 H3 Z") },
+    { name: "download", group: "action", svg: p("M10 13 L4 7 L7 7 L7 3 L13 3 L13 7 L16 7 Z M3 15 H17 V17 H3 Z") },
+    { name: "refresh", group: "action", svg: p("M10 3 A7 7 0 1 1 3.5 13 L5 12 A5 5 0 1 0 10 5 L10 7 L6 4 L10 1 Z") },
+    { name: "filter", group: "action", svg: p("M3 4 L17 4 L12 11 L12 16 L8 16 L8 11 Z") },
+    { name: "settings", group: "action", svg: p("M10 6 A4 4 0 1 1 6 10 A4 4 0 0 1 10 6 Z M9 2 H11 L11.5 4 H8.5 Z M9 16 H11 L11.5 18 H8.5 Z") + c(10, 10, 2) },
+    { name: "sort", group: "action", svg: p("M5 3 V13 M3 11 L5 13 L7 11 M13 17 V7 M11 9 L13 7 L15 9") },
+    // ----- Status -----
+    { name: "success", group: "status", svg: c(10, 10, 8) + p("M6 10 L9 13 L14 7", "none") },
+    { name: "warning", group: "status", svg: p("M10 3 L18 17 L2 17 Z") + r(9, 8, 2, 5, 0.5) + c(10, 15, 1) },
+    { name: "error", group: "status", svg: c(10, 10, 8) + p("M7 7 L13 13 M13 7 L7 13", "none") },
+    { name: "info", group: "status", svg: c(10, 10, 8) + r(9, 9, 2, 6, 0.5) + c(10, 6, 1) },
+    { name: "lock", group: "status", svg: r(5, 9, 10, 8, 1) + p("M7 9 V6 A3 3 0 0 1 13 6 V9") },
+    { name: "unlock", group: "status", svg: r(5, 9, 10, 8, 1) + p("M7 9 V6 A3 3 0 0 1 13 6") },
+    { name: "checkmark", group: "status", svg: p("M4 10 L8 14 L16 6", "none") },
+    { name: "new", group: "status", svg: c(10, 10, 6) },
+    // ----- Form fields -----
+    { name: "calendar", group: "form", svg: r(3, 5, 14, 12, 1) + r(3, 5, 14, 3, 1) + r(6, 3, 1, 4) + r(13, 3, 1, 4) },
+    { name: "clock", group: "form", svg: c(10, 10, 7) + p("M10 5 V10 L13 13", "none") },
+    { name: "mail", group: "form", svg: r(2, 5, 16, 11, 1) + p("M2 5 L10 12 L18 5", "none") },
+    { name: "phone", group: "form", svg: p("M4 3 L8 3 L9 7 L7 9 A7 7 0 0 0 11 13 L13 11 L17 12 L17 16 A2 2 0 0 1 15 18 A14 14 0 0 1 2 5 A2 2 0 0 1 4 3 Z") },
+    { name: "person", group: "form", svg: c(10, 6, 3) + p("M3 18 A7 7 0 0 1 17 18 Z") },
+    { name: "people", group: "form", svg: c(7, 7, 3) + c(14, 8, 2.5) + p("M1 18 A6 6 0 0 1 13 18 Z M12 18 A4 4 0 0 1 19 18 Z") },
+    { name: "globe", group: "form", svg: c(10, 10, 7) + p("M3 10 H17 M10 3 A7 9 0 0 1 10 17 A7 9 0 0 1 10 3", "none") },
+    { name: "attach", group: "form", svg: p("M13 3 L6 10 A3 3 0 0 0 10 14 L15 9 A5 5 0 0 0 8 2 L3 7 A7 7 0 0 0 13 17 L17 13") },
+    { name: "link", group: "form", svg: p("M7 13 L13 7 M6 11 A3 3 0 0 0 9 14 L12 11 M11 9 A3 3 0 0 1 14 6 L17 3") },
+    { name: "text", group: "form", svg: r(4, 5, 12, 2) + r(4, 9, 10, 2) + r(4, 13, 8, 2) },
+    { name: "image", group: "form", svg: r(3, 4, 14, 12, 1) + c(7, 8, 1.5) + p("M3 14 L8 10 L12 13 L17 8 V16 L3 16 Z") },
+    // ----- Flow / data ops -----
+    { name: "trigger", group: "flow", svg: p("M5 3 L15 10 L5 17 Z") },
+    { name: "condition", group: "flow", svg: p("M10 2 L18 10 L10 18 L2 10 Z") },
+    { name: "loop", group: "flow", svg: p("M10 3 A7 7 0 1 1 3.5 13 L5 12 A5 5 0 1 0 10 5 L12 5 L9 8 L6 5 Z") },
+    { name: "scope", group: "flow", svg: r(3, 3, 14, 14, 2) + r(6, 6, 8, 8, 1) },
+    { name: "variable", group: "flow", svg: p("M6 4 C2 8 2 12 6 16 M14 4 C18 8 18 12 14 16 M8 8 L12 12 M12 8 L8 12") },
+    { name: "expression", group: "flow", svg: p("M5 4 L5 16 M7 4 Q4 10 7 16 M15 4 L15 16 M13 4 Q16 10 13 16 M8 10 L12 10") },
+    { name: "branch", group: "flow", svg: c(5, 5, 2) + c(15, 5, 2) + c(10, 15, 2) + p("M5 7 V11 L10 13 L15 11 V7", "none") },
+    { name: "terminate", group: "flow", svg: c(10, 10, 8) + r(6, 9, 8, 2) },
+    // ----- Connector logos (approximated as tinted glyphs) -----
+    { name: "connector-o365", group: "connector", svg: p("M3 4 L13 3 L13 17 L3 16 Z M14 5 L17 6 L17 14 L14 15 Z") },
+    { name: "connector-dataverse", group: "connector", svg: p("M10 3 L17 7 L17 13 L10 17 L3 13 L3 7 Z") + p("M10 3 L10 17 M3 7 L17 7 M3 13 L17 13", "none") },
+    { name: "connector-sharepoint", group: "connector", svg: c(7, 8, 3.5) + c(13, 12, 2.5) + c(15, 7, 2) },
+    { name: "connector-teams", group: "connector", svg: r(2, 5, 10, 10, 1) + r(12, 3, 6, 14, 1) + p("M4 8 H10 M7 8 V13", "none") },
+    { name: "connector-outlook", group: "connector", svg: r(2, 4, 10, 12, 1) + c(7, 10, 3) + r(12, 6, 6, 8, 1) },
+    { name: "connector-http", group: "connector", svg: p("M4 6 H16 M4 10 H16 M4 14 H16 M8 4 L6 16 M14 4 L12 16") },
+    { name: "connector-approvals", group: "connector", svg: c(10, 10, 8) + p("M6 10 L9 13 L14 7", "none") },
+    { name: "connector-forms", group: "connector", svg: r(3, 3, 14, 14, 1) + r(6, 7, 8, 1) + r(6, 10, 8, 1) + r(6, 13, 5, 1) },
+    { name: "connector-excel", group: "connector", svg: r(3, 3, 14, 14, 1) + p("M6 6 L14 14 M14 6 L6 14", "none") },
+    { name: "connector-sql", group: "connector", svg: p("M3 6 A7 3 0 1 0 17 6 A7 3 0 1 0 3 6 Z M3 6 V14 A7 3 0 0 0 17 14 V6") },
+    // ----- Misc -----
+    { name: "star", group: "misc", svg: p("M10 2 L12.5 7.5 L18 8 L13.5 12 L15 18 L10 15 L5 18 L6.5 12 L2 8 L7.5 7.5 Z") },
+    { name: "heart", group: "misc", svg: p("M10 17 C4 13 2 9 4 5 C6 2 9 3 10 6 C11 3 14 2 16 5 C18 9 16 13 10 17 Z") },
+    { name: "bookmark", group: "misc", svg: p("M5 3 H15 V17 L10 14 L5 17 Z") },
+    { name: "tag", group: "misc", svg: p("M3 3 H10 L17 10 L10 17 L3 10 Z") + c(6, 6, 1) },
+    { name: "database", group: "misc", svg: p("M3 5 A7 3 0 1 0 17 5 A7 3 0 1 0 3 5 Z M3 5 V10 A7 3 0 0 0 17 10 V5 M3 10 V15 A7 3 0 0 0 17 15 V10", "none") },
+    { name: "chart", group: "misc", svg: r(4, 10, 2, 6) + r(9, 6, 2, 10) + r(14, 3, 2, 13) },
+    { name: "file", group: "misc", svg: p("M5 3 H12 L15 6 V17 H5 Z M12 3 V6 H15") }
+  ];
+  function svgDoc(def) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20">${def.svg}</svg>`;
+  }
+
   // src/lib/primitives.ts
-  async function buildPrimitives(_tokens, _page) {
-    return { components: [], sets: [] };
+  function bindFillVar2(node, tokens, key) {
+    const v = tokens.color.get(key);
+    if (!v) return;
+    const paint = { type: "SOLID", color: { r: 0, g: 0, b: 0 } };
+    node.fills = [figma.variables.setBoundVariableForPaint(paint, "color", v)];
+  }
+  function bindStrokeVar(node, tokens, key) {
+    const v = tokens.color.get(key);
+    if (!v) return;
+    const paint = { type: "SOLID", color: { r: 0, g: 0, b: 0 } };
+    node.strokes = [figma.variables.setBoundVariableForPaint(paint, "color", v)];
+    node.strokeWeight = 1;
+  }
+  function bindTextColor2(node, tokens, key) {
+    const v = tokens.color.get(key);
+    if (!v) return;
+    const paint = { type: "SOLID", color: { r: 0, g: 0, b: 0 } };
+    node.fills = [figma.variables.setBoundVariableForPaint(paint, "color", v)];
+  }
+  function setDescription(n, purpose, ppName, docs) {
+    const parts = [
+      `**Purpose:** ${purpose}`,
+      `**Power Platform equivalent:** ${ppName}`
+    ];
+    if (docs) parts.push(`**Docs:** ${docs}`);
+    n.description = parts.join("\n\n");
+  }
+  async function buildIconVariant(def, tokens) {
+    const doc = svgDoc(def);
+    const node = figma.createNodeFromSvg(doc);
+    node.name = `Name=${def.name}`;
+    node.resize(20, 20);
+    node.findAll((n) => n.type === "VECTOR" || n.type === "RECTANGLE" || n.type === "ELLIPSE").forEach((n) => {
+      try {
+        bindFillVar2(n, tokens, "color/text/primary");
+      } catch (_) {
+      }
+    });
+    const comp = figma.createComponentFromNode(node);
+    comp.name = `Name=${def.name}`;
+    return comp;
+  }
+  async function buildIconSet(page, tokens) {
+    const variants = [];
+    for (const def of ICONS) {
+      const c2 = await buildIconVariant(def, tokens);
+      page.appendChild(c2);
+      variants.push(c2);
+    }
+    if (!variants.length) return null;
+    const set = figma.combineAsVariants(variants, page);
+    set.name = "Primitives/Icon";
+    setDescription(
+      set,
+      "20\xD720 vector icon glyph drawn from the Fluent UI System Icons set.",
+      "Icon control (Canvas Apps) / various in MDA and Power Automate",
+      "https://github.com/microsoft/fluentui-system-icons"
+    );
+    remember("primitives/icon", set);
+    return set;
+  }
+  var AVATAR_SIZES = { XS: 16, S: 24, M: 32, L: 48, XL: 72 };
+  async function buildAvatarSet(page, tokens) {
+    const variants = [];
+    for (const [label, size] of Object.entries(AVATAR_SIZES)) {
+      for (const content of ["Initials", "Image"]) {
+        const f = frame(`Size=${label}, Content=${content}`, page);
+        autoLayout(f, "h", 0, 0);
+        f.counterAxisAlignItems = "CENTER";
+        f.primaryAxisAlignItems = "CENTER";
+        f.counterAxisSizingMode = "FIXED";
+        f.primaryAxisSizingMode = "FIXED";
+        f.resize(size, size);
+        f.cornerRadius = size / 2;
+        f.clipsContent = true;
+        bindFillVar2(f, tokens, content === "Image" ? "color/canvas/surface-alt" : "color/brand/primary");
+        if (content === "Initials") {
+          const fontSize = Math.max(9, Math.round(size * 0.38));
+          const t = await text("AB", "semibold", fontSize, f);
+          bindTextColor2(t, tokens, "color/canvas/background");
+        } else {
+          const swatch = rect("placeholder", size, size, f);
+          bindFillVar2(swatch, tokens, "color/stroke/default");
+        }
+        const comp = figma.createComponentFromNode(f);
+        variants.push(comp);
+      }
+    }
+    const set = figma.combineAsVariants(variants, page);
+    set.name = "Primitives/Avatar";
+    setDescription(
+      set,
+      "Circular avatar showing either a user image or initials.",
+      "Persona / avatar pattern used across Canvas gallery items and MDA form headers",
+      "https://react.fluentui.dev/?path=/docs/components-avatar--docs"
+    );
+    remember("primitives/avatar", set);
+    return set;
+  }
+  async function buildBadgeSet(page, tokens) {
+    const tones = [
+      { key: "Neutral", fill: "color/canvas/surface-alt", fg: "color/text/primary" },
+      { key: "Brand", fill: "color/brand/primary", fg: "color/canvas/background" },
+      { key: "Success", fill: "color/status/success", fg: "color/canvas/background" },
+      { key: "Warning", fill: "color/status/warning", fg: "color/canvas/background" },
+      { key: "Danger", fill: "color/status/danger", fg: "color/canvas/background" }
+    ];
+    const types = ["Dot", "Counter", "Status"];
+    const variants = [];
+    for (const type of types) {
+      for (const tone of tones) {
+        const f = frame(`Type=${type}, Tone=${tone.key}`, page);
+        autoLayout(f, "h", 4, { l: type === "Dot" ? 0 : 6, r: type === "Dot" ? 0 : 6, t: 2, b: 2 });
+        f.primaryAxisSizingMode = "AUTO";
+        f.counterAxisSizingMode = "AUTO";
+        f.counterAxisAlignItems = "CENTER";
+        f.cornerRadius = 9999;
+        bindFillVar2(f, tokens, tone.fill);
+        if (type === "Dot") {
+          const d = ellipse("dot", 8, 8, f);
+          bindFillVar2(d, tokens, tone.fill);
+          f.fills = [];
+        } else if (type === "Counter") {
+          const t = await text("9", "semibold", 10, f);
+          bindTextColor2(t, tokens, tone.fg);
+        } else {
+          const t = await text("Status", "semibold", 10, f);
+          bindTextColor2(t, tokens, tone.fg);
+        }
+        variants.push(figma.createComponentFromNode(f));
+      }
+    }
+    const set = figma.combineAsVariants(variants, page);
+    set.name = "Primitives/Badge";
+    setDescription(
+      set,
+      "Small inline marker for counts, statuses, or presence.",
+      "Badge / count indicator used in Canvas Apps gallery items and MDA command bar",
+      "https://react.fluentui.dev/?path=/docs/components-badge--docs"
+    );
+    remember("primitives/badge", set);
+    return set;
+  }
+  async function buildTagSet(page, tokens) {
+    const variantStyles = ["Filled", "Outlined"];
+    const sizes = [
+      { key: "Small", pad: 6, font: 11, height: 22 },
+      { key: "Medium", pad: 8, font: 12, height: 26 }
+    ];
+    const variants = [];
+    for (const v of variantStyles) {
+      for (const s of sizes) {
+        const f = frame(`Variant=${v}, Size=${s.key}`, page);
+        autoLayout(f, "h", 4, { l: s.pad, r: s.pad, t: 2, b: 2 });
+        f.primaryAxisSizingMode = "AUTO";
+        f.counterAxisSizingMode = "FIXED";
+        f.counterAxisAlignItems = "CENTER";
+        f.resize(f.width, s.height);
+        f.cornerRadius = 4;
+        if (v === "Filled") bindFillVar2(f, tokens, "color/canvas/surface-alt");
+        else {
+          bindFillVar2(f, tokens, "color/canvas/background");
+          bindStrokeVar(f, tokens, "color/stroke/default");
+        }
+        const t = await text("Tag", "medium", s.font, f);
+        bindTextColor2(t, tokens, "color/text/primary");
+        variants.push(figma.createComponentFromNode(f));
+      }
+    }
+    const set = figma.combineAsVariants(variants, page);
+    set.name = "Primitives/Tag";
+    setDescription(
+      set,
+      "Short categorical chip. Use for filters, selected items, categories.",
+      "Tag control (Canvas Apps) \u2014 used extensively in Combo Box multi-select and MDA filter pane",
+      "https://react.fluentui.dev/?path=/docs/components-tag--docs"
+    );
+    remember("primitives/tag", set);
+    return set;
+  }
+  async function buildSpinnerSet(page, tokens) {
+    const sizes = [
+      { key: "Tiny", d: 16 },
+      { key: "Small", d: 20 },
+      { key: "Medium", d: 28 },
+      { key: "Large", d: 36 },
+      { key: "Huge", d: 48 }
+    ];
+    const variants = [];
+    for (const s of sizes) {
+      const f = frame(`Size=${s.key}`, page);
+      f.resize(s.d, s.d);
+      f.fills = [];
+      const ring = ellipse("ring", s.d, s.d, f);
+      ring.fills = [];
+      bindStrokeVar(ring, tokens, "color/stroke/subtle");
+      ring.strokeWeight = 2;
+      const arc = ellipse("arc", s.d, s.d, f);
+      arc.fills = [];
+      bindStrokeVar(arc, tokens, "color/brand/primary");
+      arc.strokeWeight = 2;
+      arc.arcData = { startingAngle: 0, endingAngle: Math.PI * 0.7, innerRadius: 0 };
+      variants.push(figma.createComponentFromNode(f));
+    }
+    const set = figma.combineAsVariants(variants, page);
+    set.name = "Primitives/Spinner";
+    setDescription(
+      set,
+      "Indeterminate loading indicator \u2014 use when duration is unknown.",
+      "Spinner \u2014 used in Canvas Apps Timer/loading screens and MDA command bar during async operations",
+      "https://react.fluentui.dev/?path=/docs/components-spinner--docs"
+    );
+    remember("primitives/spinner", set);
+    return set;
+  }
+  async function buildPersonaSet(page, tokens, avatar) {
+    const sizes = [
+      { key: "Small", avatar: "S", font: 12, subFont: 11 },
+      { key: "Medium", avatar: "M", font: 14, subFont: 12 },
+      { key: "Large", avatar: "L", font: 16, subFont: 13 }
+    ];
+    const variants = [];
+    for (const s of sizes) {
+      for (const hasSub of [true, false]) {
+        const f = frame(`Size=${s.key}, Show secondary=${hasSub}`, page);
+        autoLayout(f, "h", 12, 0);
+        f.primaryAxisSizingMode = "AUTO";
+        f.counterAxisSizingMode = "AUTO";
+        f.counterAxisAlignItems = "CENTER";
+        const avatarVariant = avatar.children.find((c2) => c2.name.includes(`Size=${s.avatar}`) && c2.name.includes("Initials"));
+        if (avatarVariant) {
+          const inst = avatarVariant.createInstance();
+          f.appendChild(inst);
+        }
+        const stack = frame("texts", f);
+        autoLayout(stack, "v", 2, 0);
+        stack.primaryAxisSizingMode = "AUTO";
+        stack.counterAxisSizingMode = "AUTO";
+        const name = await text("Avery Brooks", "semibold", s.font, stack);
+        bindTextColor2(name, tokens, "color/text/primary");
+        if (hasSub) {
+          const sub = await text("Senior Consultant", "regular", s.subFont, stack);
+          bindTextColor2(sub, tokens, "color/text/secondary");
+        }
+        variants.push(figma.createComponentFromNode(f));
+      }
+    }
+    const set = figma.combineAsVariants(variants, page);
+    set.name = "Primitives/Persona";
+    setDescription(
+      set,
+      "Avatar plus name plus optional secondary line. Use in forms, galleries, timelines.",
+      "Persona control (Canvas Apps) \u2014 used in MDA form headers, timeline entries, share dialogs",
+      "https://react.fluentui.dev/?path=/docs/components-persona--docs"
+    );
+    remember("primitives/persona", set);
+    return set;
+  }
+  async function writePageHeader(page, tokens) {
+    const title = await text("Primitives", "bold", 40, page);
+    title.x = 40;
+    title.y = 40;
+    bindTextColor2(title, tokens, "color/text/primary");
+    const sub = await text("Atoms shared by Canvas, MDA and Flow libraries. Every primitive binds its colour to a Variable and can be restyled by switching modes.", "regular", 14, page);
+    sub.x = 40;
+    sub.y = 96;
+    sub.textAutoResize = "HEIGHT";
+    sub.resize(900, sub.height);
+    bindTextColor2(sub, tokens, "color/text/secondary");
+  }
+  async function sectionHeading(title, y, tokens, page) {
+    const t = await text(title, "semibold", 20, page);
+    t.x = 40;
+    t.y = y;
+    bindTextColor2(t, tokens, "color/text/primary");
+    return y + 40;
+  }
+  async function buildPrimitives(tokens, page) {
+    await writePageHeader(page, tokens);
+    let y = 160;
+    y = await sectionHeading("Icons", y, tokens, page);
+    const iconSet = await buildIconSet(page, tokens);
+    if (iconSet) {
+      iconSet.x = 40;
+      iconSet.y = y;
+      y += iconSet.height + 64;
+    }
+    y = await sectionHeading("Avatar", y, tokens, page);
+    const avatar = await buildAvatarSet(page, tokens);
+    avatar.x = 40;
+    avatar.y = y;
+    y += avatar.height + 64;
+    y = await sectionHeading("Badge", y, tokens, page);
+    const badge = await buildBadgeSet(page, tokens);
+    badge.x = 40;
+    badge.y = y;
+    y += badge.height + 64;
+    y = await sectionHeading("Tag", y, tokens, page);
+    const tag = await buildTagSet(page, tokens);
+    tag.x = 40;
+    tag.y = y;
+    y += tag.height + 64;
+    y = await sectionHeading("Spinner", y, tokens, page);
+    const spinner = await buildSpinnerSet(page, tokens);
+    spinner.x = 40;
+    spinner.y = y;
+    y += spinner.height + 64;
+    y = await sectionHeading("Persona", y, tokens, page);
+    const persona = await buildPersonaSet(page, tokens, avatar);
+    persona.x = 40;
+    persona.y = y;
+    y += persona.height + 64;
+    const iconByName = /* @__PURE__ */ new Map();
+    if (iconSet) {
+      for (const c2 of iconSet.children) {
+        if (c2.type === "COMPONENT") {
+          const m = c2.name.match(/Name=([^,]+)/);
+          if (m) iconByName.set(m[1], c2);
+        }
+      }
+    }
+    const sets = [];
+    if (iconSet) sets.push(iconSet);
+    sets.push(avatar, badge, tag, spinner, persona);
+    return { components: [], sets, iconByName };
   }
 
   // src/libraries/canvas/index.ts
@@ -503,7 +938,7 @@
     playground: "\u{1F9EA} Playground"
   };
   async function ensurePage(name) {
-    const existing = figma.root.children.find((p) => p.name === name);
+    const existing = figma.root.children.find((p2) => p2.name === name);
     if (existing) {
       await existing.loadAsync();
       return existing;
