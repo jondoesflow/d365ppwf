@@ -4200,9 +4200,774 @@
     return { components: [], sets: all };
   }
 
+  // src/libraries/flow/chrome.ts
+  async function buildDesignerCanvas(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 0, 0);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(1440, 900);
+    bindFill(f, tokens, "color/canvas/surface");
+    const rail = frame("rail", f);
+    autoLayout(rail, "v", 16, 16);
+    rail.primaryAxisSizingMode = "FIXED";
+    rail.counterAxisSizingMode = "FIXED";
+    rail.counterAxisAlignItems = "CENTER";
+    rail.resize(56, 900);
+    bindFill(rail, tokens, "color/canvas/background");
+    bindStroke(rail, tokens, "color/stroke/subtle", 1);
+    for (let i = 0; i < 6; i++) {
+      const ic = rect("ic", 24, 24, rail);
+      bindFill(ic, tokens, i === 0 ? "color/brand/primary" : "color/text/secondary");
+    }
+    const centre = frame("canvas", f);
+    autoLayout(centre, "v", 0, 0);
+    centre.primaryAxisSizingMode = "FIXED";
+    centre.counterAxisSizingMode = "FIXED";
+    centre.resize(1e3, 900);
+    bindFill(centre, tokens, "color/canvas/surface");
+    const ins = frame("inspector", f);
+    autoLayout(ins, "v", 12, 16);
+    ins.primaryAxisSizingMode = "FIXED";
+    ins.counterAxisSizingMode = "FIXED";
+    ins.resize(384, 900);
+    bindFill(ins, tokens, "color/canvas/background");
+    bindStroke(ins, tokens, "color/stroke/subtle", 1);
+    const h = await text("Action: Get a row by ID", "semibold", 14, ins);
+    bindText(h, tokens, "color/text/primary");
+    const tabs = frame("tabs", ins);
+    autoLayout(tabs, "h", 16, 0);
+    tabs.primaryAxisSizingMode = "AUTO";
+    tabs.counterAxisSizingMode = "AUTO";
+    for (const [i, t] of ["Parameters", "Settings", "Code View"].entries()) {
+      const tab = await text(t, i === 0 ? "semibold" : "regular", 13, tabs);
+      bindText(tab, tokens, i === 0 ? "color/brand/primary" : "color/text/secondary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Chrome/Designer Canvas", {
+      purpose: "Full flow designer frame: left rail + canvas + right inspector.",
+      pp: "Power Automate cloud flow designer shell.",
+      docs: "https://learn.microsoft.com/power-automate/get-started-logic-flow"
+    }, "flow/chrome/designer-canvas");
+  }
+  async function buildActionInspector(page, tokens) {
+    const variants = [];
+    for (const tab of ["Parameters", "Settings", "Code View"]) {
+      const f = frame(`Tab=${tab}`, void 0);
+      autoLayout(f, "v", 12, 16);
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(384, 640);
+      f.cornerRadius = 4;
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const head = await text("Get a row by ID", "semibold", 15, f);
+      bindText(head, tokens, "color/text/primary");
+      const tabs = frame("tabs", f);
+      autoLayout(tabs, "h", 16, 0);
+      tabs.primaryAxisSizingMode = "AUTO";
+      tabs.counterAxisSizingMode = "AUTO";
+      for (const [i, t] of ["Parameters", "Settings", "Code View"].entries()) {
+        const tt = await text(t, t === tab ? "semibold" : "regular", 13, tabs);
+        bindText(tt, tokens, t === tab ? "color/brand/primary" : "color/text/secondary");
+      }
+      if (tab === "Parameters") {
+        for (const [l, v] of [["Table name", "Accounts"], ["Row ID", "@{triggerBody()?['accountid']}"], ["Columns", "name, industry"]]) {
+          const r2 = frame("p", f);
+          autoLayout(r2, "v", 4, 0);
+          r2.primaryAxisSizingMode = "AUTO";
+          r2.counterAxisSizingMode = "FIXED";
+          r2.resize(352, 1);
+          const ll = await text(l, "semibold", 12, r2);
+          bindText(ll, tokens, "color/text/secondary");
+          const box = frame("box", r2);
+          autoLayout(box, "h", 0, 10);
+          box.primaryAxisSizingMode = "FIXED";
+          box.counterAxisSizingMode = "FIXED";
+          box.counterAxisAlignItems = "CENTER";
+          box.resize(352, 32);
+          box.cornerRadius = 4;
+          bindFill(box, tokens, "color/canvas/background");
+          bindStroke(box, tokens, "color/stroke/default", 1);
+          const vv = await text(v, "regular", 13, box);
+          bindText(vv, tokens, "color/text/primary");
+        }
+      } else if (tab === "Code View") {
+        const code = frame("code", f);
+        autoLayout(code, "v", 0, 12);
+        code.primaryAxisSizingMode = "FIXED";
+        code.counterAxisSizingMode = "FIXED";
+        code.resize(352, 420);
+        code.cornerRadius = 4;
+        bindFill(code, tokens, "color/canvas/surface-alt");
+        bindStroke(code, tokens, "color/stroke/subtle", 1);
+        const t = await text(`{
+  "inputs": {
+    "host": {
+      "connectionName": "shared_commondataservice",
+      "operationId": "GetItem"
+    },
+    "parameters": {
+      "entityName": "accounts",
+      "recordId": "@triggerBody()?['accountid']"
+    }
+  }
+}`, "regular", 11, code);
+        bindText(t, tokens, "color/text/primary");
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Flow/Chrome/Action Inspector", {
+      purpose: "Right-hand inspector for the selected action with Parameters / Settings / Code View tabs.",
+      pp: "Action inspector (Power Automate designer)."
+    }, "flow/chrome/inspector");
+  }
+  async function buildLeftRail(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 16, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.counterAxisAlignItems = "CENTER";
+    f.resize(56, 320);
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    for (const [i, _] of ["Test", "Save", "Checker", "History", "Comments", "More"].entries()) {
+      const ic = rect("ic", 24, 24, f);
+      bindFill(ic, tokens, i === 0 ? "color/brand/primary" : "color/text/secondary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Chrome/Left Rail", {
+      purpose: "Left-hand icon rail in the flow designer: Test, Save, Checker, History, Comments, More.",
+      pp: "Designer left rail (Power Automate)."
+    }, "flow/chrome/left-rail");
+  }
+  async function buildRunHistoryRow(page, tokens) {
+    const variants = [];
+    for (const status of ["Succeeded", "Failed", "Running"]) {
+      const f = frame(`Status=${status}`, void 0);
+      autoLayout(f, "h", 16, 16);
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.counterAxisAlignItems = "CENTER";
+      f.resize(720, 56);
+      f.cornerRadius = 3;
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const dot = ellipse("dot", 10, 10, f);
+      const statusKey = status === "Succeeded" ? "color/status/success" : status === "Failed" ? "color/status/danger" : "color/status/warning";
+      bindFill(dot, tokens, statusKey);
+      const when = await text("Apr 20, 10:02 AM", "semibold", 13, f);
+      bindText(when, tokens, "color/text/primary");
+      const meta = await text(`${status} \xB7 4 actions \xB7 1.8 s`, "regular", 13, f);
+      bindText(meta, tokens, "color/text/secondary");
+      const pad = rect("p", 1, 1, f);
+      pad.fills = [];
+      pad.layoutGrow = 1;
+      const over = await text("\u22EF", "bold", 16, f);
+      bindText(over, tokens, "color/text/secondary");
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Flow/Chrome/Run History Row", {
+      purpose: "Single row of a flow run-history list.",
+      pp: "Flow run history item (Power Automate).",
+      docs: "https://learn.microsoft.com/power-automate/fix-flow-failures"
+    }, "flow/chrome/run-history-row");
+  }
+  async function buildFlowChrome(page, tokens) {
+    return [
+      await buildDesignerCanvas(page, tokens),
+      await buildActionInspector(page, tokens),
+      await buildLeftRail(page, tokens),
+      await buildRunHistoryRow(page, tokens)
+    ];
+  }
+
+  // src/libraries/flow/card.ts
+  async function buildFlowCardInto(tokens, parent, spec) {
+    const f = frame(spec.title, parent);
+    autoLayout(f, "h", 12, { l: 0, r: 16, t: 0, b: 0 });
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.counterAxisAlignItems = "CENTER";
+    f.resize(360, 76);
+    f.cornerRadius = 6;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, spec.state === "Selected" ? "color/brand/primary" : spec.state === "Error" ? "color/status/danger" : "color/stroke/default", spec.state === "Selected" ? 2 : 1);
+    const edge = rect("edge", 8, 76, f);
+    bindFill(edge, tokens, spec.connectorColourKey);
+    const iconTile = frame("icon-tile", f);
+    autoLayout(iconTile, "h", 0, 0);
+    iconTile.primaryAxisSizingMode = "FIXED";
+    iconTile.counterAxisSizingMode = "FIXED";
+    iconTile.primaryAxisAlignItems = "CENTER";
+    iconTile.counterAxisAlignItems = "CENTER";
+    iconTile.resize(44, 44);
+    iconTile.cornerRadius = 4;
+    bindFill(iconTile, tokens, spec.connectorColourKey);
+    const iconGlyph = rect("glyph", 22, 22, iconTile);
+    bindFill(iconGlyph, tokens, "color/canvas/background");
+    const col = frame("col", f);
+    autoLayout(col, "v", 2, 0);
+    col.primaryAxisSizingMode = "AUTO";
+    col.counterAxisSizingMode = "AUTO";
+    col.layoutGrow = 1;
+    const kindLabel = await text(spec.isTrigger ? "Trigger" : "Action", "semibold", 10, col);
+    bindText(kindLabel, tokens, "color/text/secondary");
+    const title = await text(spec.title, "semibold", 13, col);
+    bindText(title, tokens, "color/text/primary");
+    const sub = await text(spec.connectorName, "regular", 11, col);
+    bindText(sub, tokens, "color/text/secondary");
+    return f;
+  }
+  async function buildFlowCardSet(tokens, spec) {
+    const variants = [];
+    for (const state of ["Default", "Selected", "Error"]) {
+      const f = await buildFlowCardInto(tokens, void 0, { ...spec, state });
+      f.name = `State=${state}`;
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return variants;
+  }
+
+  // src/libraries/flow/triggers.ts
+  var TRIGGERS = [
+    {
+      setName: "Flow/Trigger/Manual",
+      title: "Manually trigger a flow",
+      connectorName: "Instant cloud flow",
+      colourKey: "color/flow/trigger",
+      purpose: "Manual / instant starter used for button-driven flows.",
+      docs: "https://learn.microsoft.com/power-automate/introduction-to-button-flows",
+      key: "flow/trigger/manual"
+    },
+    {
+      setName: "Flow/Trigger/Scheduled",
+      title: "Recurrence",
+      connectorName: "Schedule",
+      colourKey: "color/flow/trigger",
+      purpose: "Time-based trigger \u2014 runs on an interval or cron schedule.",
+      docs: "https://learn.microsoft.com/power-automate/run-scheduled-tasks",
+      key: "flow/trigger/scheduled"
+    },
+    {
+      setName: "Flow/Trigger/Dataverse Row Added Modified Deleted",
+      title: "When a row is added, modified or deleted",
+      connectorName: "Microsoft Dataverse",
+      colourKey: "color/flow/connector-dataverse",
+      purpose: "Automated trigger firing on Dataverse row CRUD events.",
+      docs: "https://learn.microsoft.com/power-automate/dataverse/overview",
+      key: "flow/trigger/dataverse"
+    },
+    {
+      setName: "Flow/Trigger/SharePoint Item Created",
+      title: "When an item is created",
+      connectorName: "SharePoint",
+      colourKey: "color/flow/connector-sharepoint",
+      purpose: "Automated trigger for new SharePoint list items.",
+      key: "flow/trigger/sharepoint"
+    },
+    {
+      setName: "Flow/Trigger/Outlook Email Arrives",
+      title: "When a new email arrives (V3)",
+      connectorName: "Office 365 Outlook",
+      colourKey: "color/flow/connector-o365",
+      purpose: "Automated trigger for new incoming mail.",
+      key: "flow/trigger/outlook"
+    },
+    {
+      setName: "Flow/Trigger/Teams Channel Message",
+      title: "When a new channel message is added",
+      connectorName: "Microsoft Teams",
+      colourKey: "color/flow/connector-teams",
+      purpose: "Automated trigger for new Teams channel posts.",
+      key: "flow/trigger/teams"
+    },
+    {
+      setName: "Flow/Trigger/HTTP Request",
+      title: "When an HTTP request is received",
+      connectorName: "Request",
+      colourKey: "color/flow/trigger",
+      purpose: "Webhook entry point for external callers (URL + schema).",
+      key: "flow/trigger/http"
+    }
+  ];
+  async function buildFlowTriggers(page, tokens) {
+    const sets = [];
+    for (const t of TRIGGERS) {
+      const variants = await buildFlowCardSet(tokens, {
+        title: t.title,
+        connectorName: t.connectorName,
+        connectorColourKey: t.colourKey,
+        isTrigger: true
+      });
+      sets.push(publishSet(page, variants, t.setName, {
+        purpose: t.purpose,
+        pp: t.connectorName + " \u2014 " + t.title,
+        docs: t.docs
+      }, t.key));
+    }
+    return sets;
+  }
+
+  // src/libraries/flow/actions.ts
+  var ACTIONS = [
+    // Dataverse
+    { setName: "Flow/Action/Dataverse \u2014 List rows", title: "List rows", connectorName: "Microsoft Dataverse", colourKey: "color/flow/connector-dataverse", purpose: "Query Dataverse rows via OData.", key: "flow/action/dv/list" },
+    { setName: "Flow/Action/Dataverse \u2014 Get a row by ID", title: "Get a row by ID", connectorName: "Microsoft Dataverse", colourKey: "color/flow/connector-dataverse", purpose: "Fetch a single Dataverse row by primary key.", key: "flow/action/dv/get" },
+    { setName: "Flow/Action/Dataverse \u2014 Add a new row", title: "Add a new row", connectorName: "Microsoft Dataverse", colourKey: "color/flow/connector-dataverse", purpose: "Create a new Dataverse row.", key: "flow/action/dv/add" },
+    { setName: "Flow/Action/Dataverse \u2014 Update a row", title: "Update a row", connectorName: "Microsoft Dataverse", colourKey: "color/flow/connector-dataverse", purpose: "Update an existing Dataverse row.", key: "flow/action/dv/update" },
+    { setName: "Flow/Action/Dataverse \u2014 Delete a row", title: "Delete a row", connectorName: "Microsoft Dataverse", colourKey: "color/flow/connector-dataverse", purpose: "Delete a Dataverse row by primary key.", key: "flow/action/dv/delete" },
+    // SharePoint
+    { setName: "Flow/Action/SharePoint \u2014 Get items", title: "Get items", connectorName: "SharePoint", colourKey: "color/flow/connector-sharepoint", purpose: "Query SharePoint list items.", key: "flow/action/sp/list" },
+    { setName: "Flow/Action/SharePoint \u2014 Create item", title: "Create item", connectorName: "SharePoint", colourKey: "color/flow/connector-sharepoint", purpose: "Create a new SharePoint list item.", key: "flow/action/sp/create" },
+    { setName: "Flow/Action/SharePoint \u2014 Update item", title: "Update item", connectorName: "SharePoint", colourKey: "color/flow/connector-sharepoint", purpose: "Update an existing SharePoint list item.", key: "flow/action/sp/update" },
+    { setName: "Flow/Action/SharePoint \u2014 Delete item", title: "Delete item", connectorName: "SharePoint", colourKey: "color/flow/connector-sharepoint", purpose: "Delete a SharePoint list item.", key: "flow/action/sp/delete" },
+    // Outlook
+    { setName: "Flow/Action/Outlook \u2014 Send email V2", title: "Send an email (V2)", connectorName: "Office 365 Outlook", colourKey: "color/flow/connector-o365", purpose: "Send an Outlook email with HTML body and attachments.", docs: "https://learn.microsoft.com/connectors/office365/", key: "flow/action/out/send" },
+    { setName: "Flow/Action/Outlook \u2014 Send email with options", title: "Send email with options", connectorName: "Office 365 Outlook", colourKey: "color/flow/connector-o365", purpose: "Send an email offering actionable response buttons.", key: "flow/action/out/options" },
+    // Teams
+    { setName: "Flow/Action/Teams \u2014 Post message", title: "Post message in a chat or channel", connectorName: "Microsoft Teams", colourKey: "color/flow/connector-teams", purpose: "Post a message to a Teams chat or channel.", key: "flow/action/teams/post" },
+    { setName: "Flow/Action/Teams \u2014 Post adaptive card", title: "Post adaptive card and wait for a response", connectorName: "Microsoft Teams", colourKey: "color/flow/connector-teams", purpose: "Post an adaptive card and suspend the flow until the user responds.", key: "flow/action/teams/adaptive" },
+    // HTTP
+    { setName: "Flow/Action/HTTP \u2014 HTTP request", title: "HTTP", connectorName: "HTTP", colourKey: "color/flow/action", purpose: "Generic HTTP request (GET, POST, PATCH, DELETE\u2026).", key: "flow/action/http" },
+    // Approvals
+    { setName: "Flow/Action/Approvals \u2014 Start and wait", title: "Start and wait for an approval", connectorName: "Approvals", colourKey: "color/flow/action", purpose: "Suspend the flow until an approval is received or rejected.", docs: "https://learn.microsoft.com/power-automate/modern-approvals", key: "flow/action/approvals" },
+    // Generic
+    { setName: "Flow/Action/Generic Action Card", title: "Custom connector action", connectorName: "Any connector", colourKey: "color/flow/action", purpose: "Template for an unmapped connector \u2014 swap icon tint and labels.", key: "flow/action/generic" }
+  ];
+  async function buildFlowActions(page, tokens) {
+    const sets = [];
+    for (const a of ACTIONS) {
+      const variants = await buildFlowCardSet(tokens, {
+        title: a.title,
+        connectorName: a.connectorName,
+        connectorColourKey: a.colourKey,
+        isTrigger: false
+      });
+      sets.push(publishSet(page, variants, a.setName, {
+        purpose: a.purpose,
+        pp: a.connectorName + " \u2014 " + a.title,
+        docs: a.docs
+      }, a.key));
+    }
+    return sets;
+  }
+
+  // src/libraries/flow/data.ts
+  var OPS = [
+    { setName: "Flow/Data/Compose", title: "Compose", purpose: "Store a value without looping; useful for expressions.", key: "flow/data/compose" },
+    { setName: "Flow/Data/Parse JSON", title: "Parse JSON", purpose: "Produce typed outputs from a JSON body via schema.", key: "flow/data/parse-json" },
+    { setName: "Flow/Data/Select", title: "Select", purpose: "Map an array of objects to a new shape.", key: "flow/data/select" },
+    { setName: "Flow/Data/Filter array", title: "Filter array", purpose: "Filter an array based on a predicate.", key: "flow/data/filter-array" },
+    { setName: "Flow/Data/Join", title: "Join", purpose: "Concatenate array items with a separator.", key: "flow/data/join" },
+    { setName: "Flow/Data/Create CSV table", title: "Create CSV table", purpose: "Render an array as a CSV string.", key: "flow/data/csv" },
+    { setName: "Flow/Data/Create HTML table", title: "Create HTML table", purpose: "Render an array as an HTML table string.", key: "flow/data/html" }
+  ];
+  async function buildFlowData(page, tokens) {
+    const sets = [];
+    for (const o of OPS) {
+      const variants = await buildFlowCardSet(tokens, {
+        title: o.title,
+        connectorName: "Data operations",
+        connectorColourKey: "color/flow/action"
+      });
+      sets.push(publishSet(page, variants, o.setName, {
+        purpose: o.purpose,
+        pp: "Data Operations connector \u2014 " + o.title
+      }, o.key));
+    }
+    return sets;
+  }
+
+  // src/libraries/flow/variables.ts
+  var OPS2 = [
+    { setName: "Flow/Variable/Initialize variable", title: "Initialize variable", purpose: "Declare a variable with a name, type, and starting value.", key: "flow/variable/init" },
+    { setName: "Flow/Variable/Set variable", title: "Set variable", purpose: "Overwrite a variable's value.", key: "flow/variable/set" },
+    { setName: "Flow/Variable/Increment variable", title: "Increment variable", purpose: "Add to an integer variable.", key: "flow/variable/inc" },
+    { setName: "Flow/Variable/Append to array variable", title: "Append to array variable", purpose: "Append one item to an array variable.", key: "flow/variable/append-array" },
+    { setName: "Flow/Variable/Append to string variable", title: "Append to string variable", purpose: "Append a string to a string variable.", key: "flow/variable/append-string" }
+  ];
+  async function buildFlowVariables(page, tokens) {
+    const sets = [];
+    for (const o of OPS2) {
+      const variants = await buildFlowCardSet(tokens, {
+        title: o.title,
+        connectorName: "Variable",
+        connectorColourKey: "color/flow/control"
+      });
+      sets.push(publishSet(page, variants, o.setName, {
+        purpose: o.purpose,
+        pp: "Variable connector \u2014 " + o.title,
+        docs: "https://learn.microsoft.com/power-automate/use-expressions-in-conditions#variables"
+      }, o.key));
+    }
+    return sets;
+  }
+
+  // src/libraries/flow/controls.ts
+  function controlContainer(tokens, name, minHeight = 320) {
+    const f = frame(name, void 0);
+    autoLayout(f, "v", 12, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(720, minHeight);
+    f.cornerRadius = 6;
+    bindFill(f, tokens, "color/canvas/surface");
+    bindStroke(f, tokens, "color/flow/control", 1);
+    return f;
+  }
+  async function controlHeader(tokens, parent, title) {
+    const h = await buildFlowCardInto(tokens, parent, {
+      title,
+      connectorName: "Control",
+      connectorColourKey: "color/flow/control"
+    });
+    return h;
+  }
+  async function buildCondition(page, tokens) {
+    const f = controlContainer(tokens, "Default", 320);
+    await controlHeader(tokens, f, "Condition");
+    const branches = frame("branches", f);
+    autoLayout(branches, "h", 12, 0);
+    branches.primaryAxisSizingMode = "FIXED";
+    branches.counterAxisSizingMode = "FIXED";
+    branches.resize(688, 220);
+    for (const label of ["If yes", "If no"]) {
+      const b = frame(label, branches);
+      autoLayout(b, "v", 8, 12);
+      b.primaryAxisSizingMode = "FIXED";
+      b.counterAxisSizingMode = "FIXED";
+      b.resize(338, 220);
+      b.cornerRadius = 4;
+      bindFill(b, tokens, "color/canvas/background");
+      bindStroke(b, tokens, "color/stroke/subtle", 1);
+      const h = await text(label, "semibold", 12, b);
+      bindText(h, tokens, "color/text/secondary");
+      const slot = rect("slot", 314, 120, b);
+      slot.cornerRadius = 4;
+      slot.dashPattern = [6, 4];
+      bindStroke(slot, tokens, "color/stroke/default", 1);
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Control/Condition", {
+      purpose: "Two-branch container \u2014 yes / no \u2014 evaluated from a predicate.",
+      pp: "Condition control (Power Automate).",
+      docs: "https://learn.microsoft.com/power-automate/add-condition"
+    }, "flow/control/condition");
+  }
+  async function buildSwitch(page, tokens) {
+    const f = controlContainer(tokens, "Default", 360);
+    await controlHeader(tokens, f, "Switch");
+    const cases = frame("cases", f);
+    autoLayout(cases, "h", 12, 0);
+    cases.primaryAxisSizingMode = "FIXED";
+    cases.counterAxisSizingMode = "FIXED";
+    cases.resize(688, 260);
+    for (const label of ['Case: "High"', 'Case: "Normal"', "Default"]) {
+      const b = frame(label, cases);
+      autoLayout(b, "v", 8, 12);
+      b.primaryAxisSizingMode = "FIXED";
+      b.counterAxisSizingMode = "FIXED";
+      b.resize(220, 260);
+      b.cornerRadius = 4;
+      bindFill(b, tokens, "color/canvas/background");
+      bindStroke(b, tokens, "color/stroke/subtle", 1);
+      const h = await text(label, "semibold", 12, b);
+      bindText(h, tokens, "color/text/secondary");
+      const slot = rect("slot", 196, 160, b);
+      slot.cornerRadius = 4;
+      slot.dashPattern = [6, 4];
+      bindStroke(slot, tokens, "color/stroke/default", 1);
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Control/Switch", {
+      purpose: "N-case container with a Default branch.",
+      pp: "Switch control (Power Automate).",
+      docs: "https://learn.microsoft.com/power-automate/switch-case"
+    }, "flow/control/switch");
+  }
+  async function buildApplyToEach(page, tokens) {
+    const f = controlContainer(tokens, "Default", 240);
+    await controlHeader(tokens, f, "Apply to each");
+    const slot = rect("slot", 688, 120, f);
+    slot.cornerRadius = 4;
+    slot.dashPattern = [6, 4];
+    bindStroke(slot, tokens, "color/stroke/default", 1);
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Control/Apply to each", {
+      purpose: "Loop over the items in an array; body runs per item.",
+      pp: "Apply to each control (Power Automate).",
+      docs: "https://learn.microsoft.com/power-automate/apply-to-each"
+    }, "flow/control/apply-to-each");
+  }
+  async function buildDoUntil(page, tokens) {
+    const f = controlContainer(tokens, "Default", 240);
+    await controlHeader(tokens, f, "Do until");
+    const slot = rect("slot", 688, 120, f);
+    slot.cornerRadius = 4;
+    slot.dashPattern = [6, 4];
+    bindStroke(slot, tokens, "color/stroke/default", 1);
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Control/Do until", {
+      purpose: "Repeat body until a predicate evaluates to true.",
+      pp: "Do until control (Power Automate)."
+    }, "flow/control/do-until");
+  }
+  async function buildScope(page, tokens) {
+    const f = controlContainer(tokens, "Default", 240);
+    await controlHeader(tokens, f, "Scope");
+    const slot = rect("slot", 688, 120, f);
+    slot.cornerRadius = 4;
+    slot.dashPattern = [6, 4];
+    bindStroke(slot, tokens, "color/stroke/default", 1);
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Control/Scope", {
+      purpose: "Group of actions sharing run-after logic; common in try/catch patterns.",
+      pp: "Scope control (Power Automate)."
+    }, "flow/control/scope");
+  }
+  async function buildParallelBranch(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 40, 0);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(720, 120);
+    bindFill(f, tokens, "color/canvas/surface");
+    for (const _ of [0, 1, 2]) {
+      const b = rect("branch", 200, 120, f);
+      b.cornerRadius = 4;
+      b.dashPattern = [6, 4];
+      bindStroke(b, tokens, "color/stroke/default", 1);
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Control/Parallel branch", {
+      purpose: "Connector allowing a flow to fork into multiple parallel branches.",
+      pp: "Parallel branch connector (Power Automate)."
+    }, "flow/control/parallel");
+  }
+  async function buildTerminate(page, tokens) {
+    const variants = [];
+    for (const status of ["Succeeded", "Failed", "Cancelled"]) {
+      const f = await buildFlowCardInto(tokens, void 0, {
+        title: "Terminate",
+        connectorName: `Status: ${status}`,
+        connectorColourKey: status === "Succeeded" ? "color/status/success" : status === "Failed" ? "color/status/danger" : "color/flow/control"
+      });
+      f.name = `Status=${status}`;
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Flow/Control/Terminate", {
+      purpose: "End the flow run explicitly with a specified status.",
+      pp: "Terminate control (Power Automate).",
+      docs: "https://learn.microsoft.com/power-automate/terminate-a-flow"
+    }, "flow/control/terminate");
+  }
+  async function buildFlowControls(page, tokens) {
+    return [
+      await buildCondition(page, tokens),
+      await buildSwitch(page, tokens),
+      await buildApplyToEach(page, tokens),
+      await buildDoUntil(page, tokens),
+      await buildScope(page, tokens),
+      await buildParallelBranch(page, tokens),
+      await buildTerminate(page, tokens)
+    ];
+  }
+
+  // src/libraries/flow/patterns.ts
+  async function buildTryCatchFinally(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 16, 20);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(760, 480);
+    bindFill(f, tokens, "color/canvas/surface");
+    bindStroke(f, tokens, "color/flow/control", 1);
+    f.cornerRadius = 6;
+    for (const [label, colour, note] of [
+      ["Try", "color/flow/action", "Run After: default"],
+      ["Catch", "color/status/danger", "Run After: is failed, has timed out"],
+      ["Finally", "color/flow/control", "Run After: is successful, has failed, is skipped, has timed out"]
+    ]) {
+      const scope = frame(label, f);
+      autoLayout(scope, "v", 8, 12);
+      scope.primaryAxisSizingMode = "FIXED";
+      scope.counterAxisSizingMode = "FIXED";
+      scope.resize(720, 128);
+      scope.cornerRadius = 4;
+      bindFill(scope, tokens, "color/canvas/background");
+      bindStroke(scope, tokens, colour, 1);
+      const head = frame("head", scope);
+      autoLayout(head, "h", 10, 0);
+      head.primaryAxisSizingMode = "AUTO";
+      head.counterAxisSizingMode = "AUTO";
+      head.counterAxisAlignItems = "CENTER";
+      const t = await text(label + " scope", "semibold", 13, head);
+      bindText(t, tokens, "color/text/primary");
+      const note2 = await text(note, "regular", 11, head);
+      bindText(note2, tokens, "color/text/secondary");
+      const slot = rect("slot", 696, 64, scope);
+      slot.cornerRadius = 4;
+      slot.dashPattern = [6, 4];
+      bindStroke(slot, tokens, "color/stroke/default", 1);
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Pattern/Try-Catch-Finally", {
+      purpose: "Three-scope template with Run After pre-set for robust error handling.",
+      pp: "Try / Catch / Finally pattern (Power Automate).",
+      docs: "https://learn.microsoft.com/power-automate/fix-flow-failures"
+    }, "flow/pattern/try-catch-finally");
+  }
+  async function buildRetryAnnotation(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 8, { l: 12, r: 12, t: 8, b: 8 });
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "AUTO";
+    f.counterAxisAlignItems = "CENTER";
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/surface-alt");
+    const icon = rect("icon", 14, 14, f);
+    bindFill(icon, tokens, "color/status/info");
+    const title = await text("Retry policy", "semibold", 12, f);
+    bindText(title, tokens, "color/text/primary");
+    const v = await text("Exponential \xB7 4 retries \xB7 20s..3m", "regular", 12, f);
+    bindText(v, tokens, "color/text/secondary");
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Pattern/Retry policy annotation", {
+      purpose: "Annotation chip summarising an action's retry policy.",
+      pp: "Retry policy setting (Power Automate).",
+      docs: "https://learn.microsoft.com/power-automate/implement-retry-policy"
+    }, "flow/pattern/retry");
+  }
+  async function buildComment(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 4, 10);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "AUTO";
+    f.resize(280, 1);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/surface-alt");
+    const h = await text("Note", "semibold", 11, f);
+    bindText(h, tokens, "color/text/secondary");
+    const b = await text("Wait for manager approval before sending the customer confirmation.", "regular", 12, f);
+    b.layoutAlign = "STRETCH";
+    bindText(b, tokens, "color/text/primary");
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Annotation/Comment", {
+      purpose: "Inline author comment \u2014 attach alongside any action.",
+      pp: "Flow comment (Power Automate)."
+    }, "flow/annotation/comment");
+  }
+  async function buildExpression(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 6, 10);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "AUTO";
+    f.counterAxisAlignItems = "CENTER";
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/surface-alt");
+    bindStroke(f, tokens, "color/stroke/default", 1);
+    const badge = frame("fx", f);
+    autoLayout(badge, "h", 0, { l: 4, r: 4, t: 1, b: 1 });
+    badge.primaryAxisAlignItems = "CENTER";
+    badge.counterAxisAlignItems = "CENTER";
+    badge.primaryAxisSizingMode = "AUTO";
+    badge.counterAxisSizingMode = "AUTO";
+    badge.cornerRadius = 3;
+    bindFill(badge, tokens, "color/brand/primary");
+    const fx = await text("fx", "semibold", 11, badge);
+    bindText(fx, tokens, "color/canvas/background");
+    const code = await text("formatDateTime(utcNow(), 'yyyy-MM-dd')", "regular", 12, f);
+    bindText(code, tokens, "color/text/primary");
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Annotation/Expression", {
+      purpose: "Inline expression chip showing a workflow-definition-language expression.",
+      pp: "Expression (Power Automate).",
+      docs: "https://learn.microsoft.com/azure/logic-apps/workflow-definition-language-functions-reference"
+    }, "flow/annotation/expression");
+  }
+  async function buildDynamicContentChip(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 6, 8);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "AUTO";
+    f.counterAxisAlignItems = "CENTER";
+    f.cornerRadius = 3;
+    bindFill(f, tokens, "color/canvas/surface-alt");
+    const swatch = rect("sw", 10, 10, f);
+    swatch.cornerRadius = 2;
+    bindFill(swatch, tokens, "color/flow/action");
+    const label = await text("triggerBody()?.accountid", "medium", 12, f);
+    bindText(label, tokens, "color/text/primary");
+    return publishSet(page, [figma.createComponentFromNode(f)], "Flow/Annotation/Dynamic Content Chip", {
+      purpose: "Token chip for a dynamic-content reference embedded in an input.",
+      pp: "Dynamic content (Power Automate)."
+    }, "flow/annotation/dynamic-content");
+  }
+  async function buildRunAfterBadge(page, tokens) {
+    const variants = [];
+    for (const status of ["is successful", "has failed", "is skipped", "has timed out"]) {
+      const f = frame(`Status=${status}`, void 0);
+      autoLayout(f, "h", 4, 8);
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "AUTO";
+      f.counterAxisAlignItems = "CENTER";
+      f.cornerRadius = 3;
+      bindFill(f, tokens, status === "is successful" ? "color/status/success" : status === "has failed" ? "color/status/danger" : status === "has timed out" ? "color/status/warning" : "color/canvas/surface-alt");
+      const t = await text("Run after " + status, "semibold", 10, f);
+      const fg = status === "is skipped" ? "color/text/secondary" : "color/canvas/background";
+      bindText(t, tokens, fg);
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Flow/Annotation/Run After Badge", {
+      purpose: "Badge indicating the Run After condition configured on an action.",
+      pp: "Run after setting (Power Automate).",
+      docs: "https://learn.microsoft.com/power-automate/fix-flow-failures#change-the-run-after-behavior"
+    }, "flow/annotation/run-after");
+  }
+  async function buildFlowPatterns(page, tokens) {
+    return [
+      await buildTryCatchFinally(page, tokens),
+      await buildRetryAnnotation(page, tokens),
+      await buildComment(page, tokens),
+      await buildExpression(page, tokens),
+      await buildDynamicContentChip(page, tokens),
+      await buildRunAfterBadge(page, tokens)
+    ];
+  }
+
   // src/libraries/flow/index.ts
-  async function buildFlowLibrary(_tokens, _page) {
-    return { components: [], sets: [] };
+  async function renderSection3(page, tokens, title, sets, y) {
+    const t = await text(title, "semibold", 24, page);
+    t.x = 40;
+    t.y = y;
+    bindText(t, tokens, "color/text/primary");
+    const { height } = placeGrid(sets, { cols: 3, gap: 64, x: 40, y: y + 48 });
+    return y + 48 + height + 80;
+  }
+  async function buildFlowLibrary(tokens, page) {
+    const header = await text("Power Automate \u2014 Cloud Flows", "bold", 40, page);
+    header.x = 40;
+    header.y = 40;
+    bindText(header, tokens, "color/text/primary");
+    const sub = await text("Card-based designer vocabulary: triggers, actions, controls, data ops, annotations. Every card carries a connector-coloured leading edge bound to a Variable so swapping connector colours is one-click.", "regular", 14, page);
+    sub.x = 40;
+    sub.y = 96;
+    sub.textAutoResize = "HEIGHT";
+    sub.resize(1e3, sub.height);
+    bindText(sub, tokens, "color/text/secondary");
+    let y = 160;
+    const all = [];
+    const chrome = await buildFlowChrome(page, tokens);
+    all.push(...chrome);
+    y = await renderSection3(page, tokens, "Canvas / Chrome", chrome, y);
+    const triggers = await buildFlowTriggers(page, tokens);
+    all.push(...triggers);
+    y = await renderSection3(page, tokens, "Triggers", triggers, y);
+    const actions = await buildFlowActions(page, tokens);
+    all.push(...actions);
+    y = await renderSection3(page, tokens, "Actions", actions, y);
+    const data = await buildFlowData(page, tokens);
+    all.push(...data);
+    y = await renderSection3(page, tokens, "Data operations", data, y);
+    const variables = await buildFlowVariables(page, tokens);
+    all.push(...variables);
+    y = await renderSection3(page, tokens, "Variables", variables, y);
+    const controls = await buildFlowControls(page, tokens);
+    all.push(...controls);
+    y = await renderSection3(page, tokens, "Control blocks", controls, y);
+    const patterns = await buildFlowPatterns(page, tokens);
+    all.push(...patterns);
+    y = await renderSection3(page, tokens, "Patterns & Annotations", patterns, y);
+    return { components: [], sets: all };
   }
 
   // src/main.ts
