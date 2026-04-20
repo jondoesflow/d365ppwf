@@ -14,6 +14,9 @@ import { buildPrimitives } from './lib/primitives.js';
 import { buildCanvasLibrary } from './libraries/canvas/index.js';
 import { buildMdaLibrary } from './libraries/mda/index.js';
 import { buildFlowLibrary } from './libraries/flow/index.js';
+import { buildReadmePage } from './pages/readme.js';
+import { buildPlaygroundPage } from './pages/playground.js';
+import { buildExamplesPage } from './pages/examples.js';
 
 figma.showUI(__html__, { width: 340, height: 560, themeColors: true });
 
@@ -153,8 +156,17 @@ async function run(opts: GenerateOptions, updateOnly: boolean): Promise<void> {
 
   if (examplesPage) {
     progress(90, 'Building examples…');
-    // Examples composer runs in Increment 7.
+    await figma.setCurrentPageAsync(examplesPage);
+    await buildExamplesPage(tokens, examplesPage);
   }
+
+  progress(94, 'Building readme…');
+  await figma.setCurrentPageAsync(readmePage);
+  await buildReadmePage(tokens, readmePage);
+
+  progress(97, 'Building playground…');
+  await figma.setCurrentPageAsync(playgroundPage);
+  await buildPlaygroundPage(tokens, playgroundPage);
 
   // Return to readme
   await figma.setCurrentPageAsync(readmePage);

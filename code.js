@@ -1547,16 +1547,16 @@
       bindFill(box, tokens, bgFor(state));
       bindStroke(box, tokens, borderFor(state), state === "Focus" ? 2 : 1);
       for (const name of ["Avery", "Morgan", "Jess"]) {
-        const chip = frame("chip", box);
-        autoLayout(chip, "h", 4, { l: 6, r: 6, t: 2, b: 2 });
-        chip.counterAxisSizingMode = "AUTO";
-        chip.primaryAxisSizingMode = "AUTO";
-        chip.counterAxisAlignItems = "CENTER";
-        chip.cornerRadius = 4;
-        bindFill(chip, tokens, "color/canvas/surface-alt");
-        const nm = await text(name, "medium", 12, chip);
+        const chip2 = frame("chip", box);
+        autoLayout(chip2, "h", 4, { l: 6, r: 6, t: 2, b: 2 });
+        chip2.counterAxisSizingMode = "AUTO";
+        chip2.primaryAxisSizingMode = "AUTO";
+        chip2.counterAxisAlignItems = "CENTER";
+        chip2.cornerRadius = 4;
+        bindFill(chip2, tokens, "color/canvas/surface-alt");
+        const nm = await text(name, "medium", 12, chip2);
         bindText(nm, tokens, "color/text/primary");
-        const x = await text("\xD7", "bold", 12, chip);
+        const x = await text("\xD7", "bold", 12, chip2);
         bindText(x, tokens, "color/text/secondary");
       }
       variants.push(figma.createComponentFromNode(outer));
@@ -2664,15 +2664,15 @@
       bindStroke(f, tokens, "color/stroke/subtle", 1);
       const actions = selCount === "None" ? ["+ New", "Edit", "Refresh", "Export to Excel", "Flow", "Run Report"] : selCount === "Single" ? ["+ New", "Edit", "Deactivate", "Assign", "Share", "Email a Link", "Delete"] : ["Edit", "Deactivate", "Assign", "Delete", "Merge", "Bulk edit"];
       for (const a of actions) {
-        const btn = frame("btn", f);
-        autoLayout(btn, "h", 6, { l: 8, r: 8, t: 6, b: 6 });
-        btn.primaryAxisSizingMode = "AUTO";
-        btn.counterAxisSizingMode = "AUTO";
-        btn.counterAxisAlignItems = "CENTER";
-        btn.cornerRadius = 4;
-        const ic = rect("ic", 14, 14, btn);
+        const btn2 = frame("btn", f);
+        autoLayout(btn2, "h", 6, { l: 8, r: 8, t: 6, b: 6 });
+        btn2.primaryAxisSizingMode = "AUTO";
+        btn2.counterAxisSizingMode = "AUTO";
+        btn2.counterAxisAlignItems = "CENTER";
+        btn2.cornerRadius = 4;
+        const ic = rect("ic", 14, 14, btn2);
         bindFill(ic, tokens, "color/text/secondary");
-        const t = await text(a, "regular", 13, btn);
+        const t = await text(a, "regular", 13, btn2);
         bindText(t, tokens, "color/text/primary");
       }
       const pad = rect("pad", 1, 1, f);
@@ -2972,14 +2972,14 @@
       f.primaryAxisSizingMode = "AUTO";
       f.counterAxisSizingMode = "FIXED";
       f.resize(320, 1);
-      const btn = frame("btn", f);
-      autoLayout(btn, "h", 6, 0);
-      btn.primaryAxisSizingMode = "AUTO";
-      btn.counterAxisSizingMode = "AUTO";
-      btn.counterAxisAlignItems = "CENTER";
-      const t = await text("My Open Opportunities", "semibold", 16, btn);
+      const btn2 = frame("btn", f);
+      autoLayout(btn2, "h", 6, 0);
+      btn2.primaryAxisSizingMode = "AUTO";
+      btn2.counterAxisSizingMode = "AUTO";
+      btn2.counterAxisAlignItems = "CENTER";
+      const t = await text("My Open Opportunities", "semibold", 16, btn2);
       bindText(t, tokens, "color/text/primary");
-      const chev = await text("\u25BE", "regular", 12, btn);
+      const chev = await text("\u25BE", "regular", 12, btn2);
       bindText(chev, tokens, "color/text/secondary");
       if (state === "Open") {
         const menu = frame("menu", f);
@@ -3425,8 +3425,8 @@
     pad.fills = [];
     pad.layoutGrow = 1;
     for (const a of ["+ New", "Add existing"]) {
-      const btn = await text(a, "semibold", 12, hdr);
-      bindText(btn, tokens, "color/brand/primary");
+      const btn2 = await text(a, "semibold", 12, hdr);
+      bindText(btn2, tokens, "color/brand/primary");
     }
     const over = await text("\u22EF", "bold", 14, hdr);
     bindText(over, tokens, "color/text/secondary");
@@ -3630,16 +3630,16 @@
     footer.resize(420, 56);
     bindStroke(footer, tokens, "color/stroke/subtle", 1);
     for (const [kind, label] of [["secondary", "Cancel"], ["secondary", "Save & Close"], ["primary", "Save"]]) {
-      const btn = frame("btn", footer);
-      autoLayout(btn, "h", 0, { l: 12, r: 12, t: 8, b: 8 });
-      btn.primaryAxisAlignItems = "CENTER";
-      btn.counterAxisAlignItems = "CENTER";
-      btn.primaryAxisSizingMode = "AUTO";
-      btn.counterAxisSizingMode = "AUTO";
-      btn.cornerRadius = 4;
-      if (kind === "primary") bindFill(btn, tokens, "color/brand/primary");
-      else bindStroke(btn, tokens, "color/stroke/default", 1);
-      const t2 = await text(label, "semibold", 13, btn);
+      const btn2 = frame("btn", footer);
+      autoLayout(btn2, "h", 0, { l: 12, r: 12, t: 8, b: 8 });
+      btn2.primaryAxisAlignItems = "CENTER";
+      btn2.counterAxisAlignItems = "CENTER";
+      btn2.primaryAxisSizingMode = "AUTO";
+      btn2.counterAxisSizingMode = "AUTO";
+      btn2.cornerRadius = 4;
+      if (kind === "primary") bindFill(btn2, tokens, "color/brand/primary");
+      else bindStroke(btn2, tokens, "color/stroke/default", 1);
+      const t2 = await text(label, "semibold", 13, btn2);
       bindText(t2, tokens, kind === "primary" ? "color/canvas/background" : "color/text/primary");
     }
     return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dialog/Quick Create", {
@@ -3669,16 +3669,16 @@
     footer.resize(440, 60);
     bindStroke(footer, tokens, "color/stroke/subtle", 1);
     for (const [kind, label] of [["secondary", "Cancel"], ["primary", "Deactivate"]]) {
-      const btn = frame("b", footer);
-      autoLayout(btn, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
-      btn.primaryAxisAlignItems = "CENTER";
-      btn.counterAxisAlignItems = "CENTER";
-      btn.primaryAxisSizingMode = "AUTO";
-      btn.counterAxisSizingMode = "AUTO";
-      btn.cornerRadius = 4;
-      if (kind === "primary") bindFill(btn, tokens, "color/brand/primary");
-      else bindStroke(btn, tokens, "color/stroke/default", 1);
-      const t2 = await text(label, "semibold", 13, btn);
+      const btn2 = frame("b", footer);
+      autoLayout(btn2, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+      btn2.primaryAxisAlignItems = "CENTER";
+      btn2.counterAxisAlignItems = "CENTER";
+      btn2.primaryAxisSizingMode = "AUTO";
+      btn2.counterAxisSizingMode = "AUTO";
+      btn2.cornerRadius = 4;
+      if (kind === "primary") bindFill(btn2, tokens, "color/brand/primary");
+      else bindStroke(btn2, tokens, "color/stroke/default", 1);
+      const t2 = await text(label, "semibold", 13, btn2);
       bindText(t2, tokens, kind === "primary" ? "color/canvas/background" : "color/text/primary");
     }
     return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dialog/Confirm", {
@@ -3710,13 +3710,13 @@
     footer.counterAxisSizingMode = "AUTO";
     footer.primaryAxisAlignItems = "MAX";
     footer.resize(400, 1);
-    const btn = frame("b", footer);
-    autoLayout(btn, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
-    btn.primaryAxisSizingMode = "AUTO";
-    btn.counterAxisSizingMode = "AUTO";
-    btn.cornerRadius = 4;
-    bindFill(btn, tokens, "color/brand/primary");
-    const bt = await text("OK", "semibold", 13, btn);
+    const btn2 = frame("b", footer);
+    autoLayout(btn2, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+    btn2.primaryAxisSizingMode = "AUTO";
+    btn2.counterAxisSizingMode = "AUTO";
+    btn2.cornerRadius = 4;
+    bindFill(btn2, tokens, "color/brand/primary");
+    const bt = await text("OK", "semibold", 13, btn2);
     bindText(bt, tokens, "color/canvas/background");
     return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dialog/Alert", {
       purpose: "Single-button dismissal dialog for informational events.",
@@ -3752,14 +3752,14 @@
       footer.resize(w, 56);
       bindStroke(footer, tokens, "color/stroke/subtle", 1);
       for (const [kind, label] of [["secondary", "Cancel"], ["primary", "Done"]]) {
-        const btn = frame("b", footer);
-        autoLayout(btn, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
-        btn.primaryAxisSizingMode = "AUTO";
-        btn.counterAxisSizingMode = "AUTO";
-        btn.cornerRadius = 4;
-        if (kind === "primary") bindFill(btn, tokens, "color/brand/primary");
-        else bindStroke(btn, tokens, "color/stroke/default", 1);
-        const bt = await text(label, "semibold", 13, btn);
+        const btn2 = frame("b", footer);
+        autoLayout(btn2, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+        btn2.primaryAxisSizingMode = "AUTO";
+        btn2.counterAxisSizingMode = "AUTO";
+        btn2.cornerRadius = 4;
+        if (kind === "primary") bindFill(btn2, tokens, "color/brand/primary");
+        else bindStroke(btn2, tokens, "color/stroke/default", 1);
+        const bt = await text(label, "semibold", 13, btn2);
         bindText(bt, tokens, kind === "primary" ? "color/canvas/background" : "color/text/primary");
       }
       variants.push(figma.createComponentFromNode(f));
@@ -4970,6 +4970,416 @@
     return { components: [], sets: all };
   }
 
+  // src/pages/readme.ts
+  var VERSION = "0.2.0";
+  async function buildReadmePage(tokens, page) {
+    const hero = frame("hero", page);
+    autoLayout(hero, "v", 20, 64);
+    hero.primaryAxisSizingMode = "FIXED";
+    hero.counterAxisSizingMode = "FIXED";
+    hero.resize(1200, 460);
+    hero.cornerRadius = 12;
+    hero.x = 40;
+    hero.y = 40;
+    bindFill(hero, tokens, "color/brand/primary");
+    const crumb = await text(`v${VERSION} \xB7 built ${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}`, "semibold", 12, hero);
+    bindText(crumb, tokens, "color/canvas/background");
+    crumb.opacity = 0.8;
+    const title = await text("Power Platform Wireframe Library", "bold", 56, hero);
+    bindText(title, tokens, "color/canvas/background");
+    title.lineHeight = { unit: "PERCENT", value: 100 };
+    const tag = await text("Reusable Figma component library for makers and solution architects building on Dynamics 365 and the Power Platform.", "regular", 18, hero);
+    tag.textAutoResize = "HEIGHT";
+    tag.resize(900, tag.height);
+    bindText(tag, tokens, "color/canvas/background");
+    tag.opacity = 0.9;
+    const cardsY = 520;
+    const cards = [
+      ["Contents", [
+        "\u{1F3A8} Tokens \u2014 Variables \xB7 Text Styles \xB7 Effects",
+        "\u{1F9F1} Primitives \u2014 Icons \xB7 Avatar \xB7 Badge \xB7 Tag \xB7 Spinner \xB7 Persona",
+        "\u{1F5BC} Canvas Apps \u2014 Modern Controls (~40 sets)",
+        "\u{1F3DB} Model-Driven Apps \u2014 Fluent UI 2 (~40 sets)",
+        "\u{1F500} Power Automate \u2014 Cloud Flows (~50 sets)",
+        "\u{1F4D0} Wireframe Examples \u2014 4+ screens per library",
+        "\u{1F9EA} Playground \u2014 empty page for your own work"
+      ]],
+      ["How to use", [
+        "1. Open the Assets panel (\u21E72).",
+        "2. Search for Canvas/, MDA/, or Flow/ to find components.",
+        "3. Drag an instance onto your canvas or Playground page.",
+        "4. Adjust variant properties in the right-hand panel.",
+        "5. Swap mode on Power Platform Tokens to re-theme.",
+        "6. Re-run the plugin anytime to patch components in place."
+      ]],
+      ["Conventions", [
+        "Category/Subcategory/Name naming for assets-panel grouping.",
+        "State \xD7 Size \xD7 Appearance variant axes.",
+        "Every colour / stroke / radius bound to a Variable.",
+        "Auto-layout on every container.",
+        "Descriptions: Purpose \xB7 PP equivalent \xB7 Docs link.",
+        "Idempotent re-runs \u2014 stable node ids in pluginData."
+      ]]
+    ];
+    for (const [i, [titleText, bullets]] of cards.entries()) {
+      const card = frame(titleText, page);
+      autoLayout(card, "v", 10, 20);
+      card.primaryAxisSizingMode = "FIXED";
+      card.counterAxisSizingMode = "FIXED";
+      card.resize(386, 320);
+      card.cornerRadius = 8;
+      card.x = 40 + i * (386 + 20);
+      card.y = cardsY;
+      bindFill(card, tokens, "color/canvas/background");
+      bindStroke(card, tokens, "color/stroke/subtle", 1);
+      const h = await text(titleText, "semibold", 18, card);
+      bindText(h, tokens, "color/text/primary");
+      for (const b of bullets) {
+        const bt = await text(b, "regular", 13, card);
+        bindText(bt, tokens, "color/text/secondary");
+        bt.textAutoResize = "HEIGHT";
+        bt.layoutAlign = "STRETCH";
+      }
+    }
+    const ref = await text("Token quick reference", "semibold", 20, page);
+    ref.x = 40;
+    ref.y = cardsY + 360;
+    bindText(ref, tokens, "color/text/primary");
+    const hint = await text("Every component binds to tokens in the Power Platform Tokens collection. Visit the \u{1F3A8} Tokens page for a full specimen.", "regular", 13, page);
+    hint.x = 40;
+    hint.y = cardsY + 390;
+    bindText(hint, tokens, "color/text/secondary");
+    const cats = [
+      ["Brand", ["color/brand/primary", "color/brand/primary-hover", "color/brand/primary-pressed"]],
+      ["Canvas", ["color/canvas/background", "color/canvas/surface", "color/canvas/surface-alt"]],
+      ["Text", ["color/text/primary", "color/text/secondary", "color/text/disabled"]],
+      ["Status", ["color/status/success", "color/status/warning", "color/status/danger", "color/status/info"]],
+      ["Flow", ["color/flow/trigger", "color/flow/action", "color/flow/control"]],
+      ["Connectors", ["color/flow/connector-o365", "color/flow/connector-dataverse", "color/flow/connector-sharepoint", "color/flow/connector-teams"]]
+    ];
+    for (const [i, [name, keys]] of cats.entries()) {
+      const col = frame(name, page);
+      autoLayout(col, "v", 6, 0);
+      col.primaryAxisSizingMode = "AUTO";
+      col.counterAxisSizingMode = "FIXED";
+      col.resize(200, 1);
+      col.x = 40 + i * 200;
+      col.y = cardsY + 430;
+      const h = await text(name.toUpperCase(), "semibold", 10, col);
+      bindText(h, tokens, "color/text/secondary");
+      for (const k of keys) {
+        const row = frame("row", col);
+        autoLayout(row, "h", 8, 0);
+        row.primaryAxisSizingMode = "FIXED";
+        row.counterAxisSizingMode = "AUTO";
+        row.counterAxisAlignItems = "CENTER";
+        row.resize(190, 1);
+        const sw = rect("sw", 16, 16, row);
+        sw.cornerRadius = 3;
+        bindFill(sw, tokens, k);
+        const lbl = await text(k.replace("color/", ""), "regular", 11, row);
+        bindText(lbl, tokens, "color/text/primary");
+      }
+    }
+    const clY = cardsY + 680;
+    const cl = await text("Changelog", "semibold", 20, page);
+    cl.x = 40;
+    cl.y = clY;
+    bindText(cl, tokens, "color/text/primary");
+    const entries = [
+      ["v0.2.0", "Rebuild \u2014 Power Platform Wireframe Library. TypeScript, Figma Variables, Light/Dark modes, full component authoring, idempotent re-runs."],
+      ["v0.1.0", "Initial D365 wireframe template \u2014 grayscale frames only."]
+    ];
+    for (const [i, [v, note]] of entries.entries()) {
+      const row = frame(v, page);
+      autoLayout(row, "h", 16, 16);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "AUTO";
+      row.resize(1200, 1);
+      row.cornerRadius = 6;
+      row.x = 40;
+      row.y = clY + 40 + i * 92;
+      bindFill(row, tokens, "color/canvas/surface");
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      const vt = await text(v, "semibold", 13, row);
+      bindText(vt, tokens, "color/brand/primary");
+      const note2 = await text(note, "regular", 13, row);
+      note2.textAutoResize = "HEIGHT";
+      note2.layoutGrow = 1;
+      bindText(note2, tokens, "color/text/primary");
+    }
+  }
+
+  // src/pages/playground.ts
+  async function buildPlaygroundPage(tokens, page) {
+    const w = frame("watermark", page);
+    autoLayout(w, "v", 8, 32);
+    w.primaryAxisSizingMode = "FIXED";
+    w.counterAxisSizingMode = "FIXED";
+    w.counterAxisAlignItems = "CENTER";
+    w.primaryAxisAlignItems = "CENTER";
+    w.resize(640, 240);
+    w.cornerRadius = 12;
+    w.x = 100;
+    w.y = 100;
+    w.dashPattern = [8, 6];
+    bindStroke(w, tokens, "color/stroke/default", 1);
+    const t = await text("Playground", "bold", 36, w);
+    bindText(t, tokens, "color/text/primary");
+    t.opacity = 0.5;
+    const h = await text("Drag components from the Assets panel and compose your own wireframes here.", "regular", 14, w);
+    h.textAutoResize = "HEIGHT";
+    h.resize(480, h.height);
+    bindText(h, tokens, "color/text/secondary");
+    const hint = await text("This watermark is cosmetic \u2014 it is safe to ignore or delete.", "regular", 11, w);
+    bindText(hint, tokens, "color/text/secondary");
+    hint.opacity = 0.7;
+  }
+
+  // src/pages/examples.ts
+  async function sectionLabel(page, tokens, title, subtitle, x, y) {
+    const t = await text(title, "semibold", 22, page);
+    t.x = x;
+    t.y = y;
+    bindText(t, tokens, "color/text/primary");
+    const s = await text(subtitle, "regular", 13, page);
+    s.x = x;
+    s.y = y + 30;
+    bindText(s, tokens, "color/text/secondary");
+  }
+  async function chip(parent, tokens, label, fg, bg) {
+    const f = frame("chip", parent);
+    autoLayout(f, "h", 0, { l: 8, r: 8, t: 2, b: 2 });
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "AUTO";
+    f.cornerRadius = 4;
+    bindFill(f, tokens, bg);
+    const t = await text(label, "semibold", 11, f);
+    bindText(t, tokens, fg);
+  }
+  async function btn(parent, tokens, label, primary) {
+    const f = frame("btn", parent);
+    autoLayout(f, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+    f.primaryAxisAlignItems = "CENTER";
+    f.counterAxisAlignItems = "CENTER";
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "AUTO";
+    f.cornerRadius = 4;
+    if (primary) bindFill(f, tokens, "color/brand/primary");
+    else bindStroke(f, tokens, "color/stroke/default", 1);
+    const t = await text(label, "semibold", 13, f);
+    bindText(t, tokens, primary ? "color/canvas/background" : "color/text/primary");
+    return f;
+  }
+  async function labeledField(parent, tokens, label, value) {
+    const row = frame("f", parent);
+    autoLayout(row, "v", 4, 0);
+    row.primaryAxisSizingMode = "AUTO";
+    row.counterAxisSizingMode = "FIXED";
+    row.resize(parent.width - 32, 1);
+    const l = await text(label, "semibold", 12, row);
+    bindText(l, tokens, "color/text/secondary");
+    const v = await text(value, "regular", 14, row);
+    bindText(v, tokens, "color/text/primary");
+    const ln = rect("ln", parent.width - 32, 1, row);
+    bindFill(ln, tokens, "color/stroke/subtle");
+  }
+  async function canvasApproval(page, tokens, x, y) {
+    const f = frame("Canvas \xB7 Approval request", page);
+    autoLayout(f, "v", 16, 24);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(520, 1);
+    f.cornerRadius = 8;
+    f.x = x;
+    f.y = y;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const h = await text("Approval request", "semibold", 20, f);
+    bindText(h, tokens, "color/text/primary");
+    const s = await text("Requested by Avery Brooks \xB7 Yesterday", "regular", 13, f);
+    bindText(s, tokens, "color/text/secondary");
+    const body = frame("body", f);
+    autoLayout(body, "v", 12, 16);
+    body.primaryAxisSizingMode = "AUTO";
+    body.counterAxisSizingMode = "FIXED";
+    body.resize(472, 1);
+    body.cornerRadius = 4;
+    bindFill(body, tokens, "color/canvas/surface");
+    await labeledField(body, tokens, "Amount", "$ 4,200.00");
+    await labeledField(body, tokens, "Category", "Travel \u2014 client visit");
+    await labeledField(body, tokens, "Justification", "Two-day on-site with Contoso to close Q2 deal.");
+    const actions = frame("actions", f);
+    autoLayout(actions, "h", 8, 0);
+    actions.primaryAxisSizingMode = "AUTO";
+    actions.counterAxisSizingMode = "AUTO";
+    actions.primaryAxisAlignItems = "MAX";
+    await btn(actions, tokens, "Reject", false);
+    await btn(actions, tokens, "Approve", true);
+  }
+  async function canvasCaseList(page, tokens, x, y) {
+    const f = frame("Canvas \xB7 Case list", page);
+    autoLayout(f, "v", 0, 0);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(520, 1);
+    f.cornerRadius = 8;
+    f.x = x;
+    f.y = y;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const hdr = frame("hdr", f);
+    autoLayout(hdr, "h", 12, 20);
+    hdr.primaryAxisSizingMode = "FIXED";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.counterAxisAlignItems = "CENTER";
+    hdr.resize(520, 56);
+    bindFill(hdr, tokens, "color/brand/primary");
+    const t = await text("My cases", "semibold", 16, hdr);
+    bindText(t, tokens, "color/canvas/background");
+    const pad = rect("p", 1, 1, hdr);
+    pad.fills = [];
+    pad.layoutGrow = 1;
+    const count = await text("12 open", "regular", 13, hdr);
+    bindText(count, tokens, "color/canvas/background");
+    const cases = [
+      ["Printer offline on Floor 3", "Contoso", "High", "danger"],
+      ["Laptop won't charge", "Fabrikam", "Normal", "neutral"],
+      ["VPN intermittent", "Litware", "High", "danger"],
+      ["Email disk full", "Tailwind", "Low", "neutral"],
+      ["SSO login error", "Northwind", "High", "danger"]
+    ];
+    for (let i = 0; i < cases.length; i++) {
+      const row = frame("r", f);
+      autoLayout(row, "h", 12, 16);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.counterAxisAlignItems = "CENTER";
+      row.resize(520, 56);
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      const av = ellipse("av", 32, 32, row);
+      bindFill(av, tokens, "color/canvas/surface-alt");
+      const col = frame("c", row);
+      autoLayout(col, "v", 2, 0);
+      col.primaryAxisSizingMode = "AUTO";
+      col.counterAxisSizingMode = "AUTO";
+      col.layoutGrow = 1;
+      const title = await text(cases[i][0], "semibold", 13, col);
+      bindText(title, tokens, "color/text/primary");
+      const meta = await text(`${cases[i][1]} \xB7 CAS-${1200 + i}`, "regular", 11, col);
+      bindText(meta, tokens, "color/text/secondary");
+      await chip(
+        row,
+        tokens,
+        cases[i][2],
+        cases[i][3] === "danger" ? "color/canvas/background" : "color/text/primary",
+        cases[i][3] === "danger" ? "color/status/danger" : "color/canvas/surface-alt"
+      );
+    }
+  }
+  async function mdaDashboard(page, tokens, x, y) {
+    const f = frame("MDA \xB7 Sales Activity Dashboard", page);
+    autoLayout(f, "v", 16, 20);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(880, 1);
+    f.cornerRadius = 6;
+    f.x = x;
+    f.y = y;
+    bindFill(f, tokens, "color/canvas/surface");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const h = await text("Sales Activity Dashboard", "semibold", 22, f);
+    bindText(h, tokens, "color/text/primary");
+    const kpis = frame("kpis", f);
+    autoLayout(kpis, "h", 16, 0);
+    kpis.primaryAxisSizingMode = "FIXED";
+    kpis.counterAxisSizingMode = "FIXED";
+    kpis.resize(840, 110);
+    for (const [label, value, delta, tone] of [
+      ["Open revenue", "$ 1.2M", "+8.4%", "color/status/success"],
+      ["Pipeline", "142", "+12", "color/status/success"],
+      ["Won MTD", "$ 328K", "+14.1%", "color/status/success"],
+      ["Avg deal", "$ 18.5K", "-2.1%", "color/status/danger"]
+    ]) {
+      const tile2 = frame(label, kpis);
+      autoLayout(tile2, "v", 6, 16);
+      tile2.primaryAxisSizingMode = "FIXED";
+      tile2.counterAxisSizingMode = "FIXED";
+      tile2.resize(198, 110);
+      tile2.cornerRadius = 6;
+      bindFill(tile2, tokens, "color/canvas/background");
+      bindStroke(tile2, tokens, "color/stroke/subtle", 1);
+      const l = await text(label, "semibold", 11, tile2);
+      bindText(l, tokens, "color/text/secondary");
+      const v = await text(value, "bold", 26, tile2);
+      bindText(v, tokens, "color/text/primary");
+      const d = await text(delta, "semibold", 12, tile2);
+      bindText(d, tokens, tone);
+    }
+    const chart = frame("chart", f);
+    autoLayout(chart, "h", 6, 16);
+    chart.primaryAxisSizingMode = "FIXED";
+    chart.counterAxisSizingMode = "FIXED";
+    chart.counterAxisAlignItems = "MAX";
+    chart.resize(840, 200);
+    chart.cornerRadius = 6;
+    bindFill(chart, tokens, "color/canvas/background");
+    bindStroke(chart, tokens, "color/stroke/subtle", 1);
+    for (const pct of [0.4, 0.55, 0.3, 0.72, 0.85, 0.6, 0.78, 0.92, 0.68, 0.8, 0.7, 0.95]) {
+      const bar = rect("bar", 48, 160 * pct, chart);
+      bar.cornerRadius = 2;
+      bindFill(bar, tokens, "color/brand/primary");
+    }
+  }
+  async function flowCaseIntake(page, tokens, x, y) {
+    const f = frame("Flow \xB7 Case intake with approval", page);
+    autoLayout(f, "v", 20, 24);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.counterAxisAlignItems = "CENTER";
+    f.resize(460, 1);
+    f.cornerRadius = 8;
+    f.x = x;
+    f.y = y;
+    bindFill(f, tokens, "color/canvas/surface");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const h = await text("Case intake with approval", "semibold", 18, f);
+    bindText(h, tokens, "color/text/primary");
+    const nodes = [
+      ["When a new Case is created", "Microsoft Dataverse", "color/flow/connector-dataverse", true],
+      ["Get related Account", "Microsoft Dataverse", "color/flow/connector-dataverse", false],
+      ["Start and wait for approval", "Approvals", "color/flow/action", false],
+      ["Post message to Teams", "Microsoft Teams", "color/flow/connector-teams", false]
+    ];
+    for (const [title, conn, key, isTrigger] of nodes) {
+      const card = await buildFlowCardInto(tokens, f, {
+        title,
+        connectorName: conn,
+        connectorColourKey: key,
+        isTrigger
+      });
+    }
+  }
+  async function buildExamplesPage(tokens, page) {
+    const title = await text("Wireframe Examples", "bold", 40, page);
+    title.x = 40;
+    title.y = 40;
+    bindText(title, tokens, "color/text/primary");
+    const sub = await text("Composed screens demonstrating realistic combinations of the components on the other library pages.", "regular", 14, page);
+    sub.x = 40;
+    sub.y = 96;
+    sub.textAutoResize = "HEIGHT";
+    sub.resize(900, sub.height);
+    bindText(sub, tokens, "color/text/secondary");
+    await sectionLabel(page, tokens, "Canvas Apps", "Approval request \xB7 Case list", 40, 160);
+    await canvasApproval(page, tokens, 40, 220);
+    await canvasCaseList(page, tokens, 600, 220);
+    await sectionLabel(page, tokens, "Model-Driven Apps", "Sales activity dashboard", 40, 860);
+    await mdaDashboard(page, tokens, 40, 920);
+    await sectionLabel(page, tokens, "Power Automate", "Case intake with approval", 40, 1360);
+    await flowCaseIntake(page, tokens, 40, 1420);
+  }
+
   // src/main.ts
   figma.showUI(__html__, { width: 340, height: 560, themeColors: true });
   figma.ui.onmessage = async (msg) => {
@@ -5077,7 +5487,15 @@
     }
     if (examplesPage) {
       progress(90, "Building examples\u2026");
+      await figma.setCurrentPageAsync(examplesPage);
+      await buildExamplesPage(tokens, examplesPage);
     }
+    progress(94, "Building readme\u2026");
+    await figma.setCurrentPageAsync(readmePage);
+    await buildReadmePage(tokens, readmePage);
+    progress(97, "Building playground\u2026");
+    await figma.setCurrentPageAsync(playgroundPage);
+    await buildPlaygroundPage(tokens, playgroundPage);
     await figma.setCurrentPageAsync(readmePage);
     progress(100, "Done.");
     const elapsed = ((Date.now() - t0) / 1e3).toFixed(1);
