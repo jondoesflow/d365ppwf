@@ -5,11 +5,17 @@
  */
 
 import type { Tokens } from '../lib/tokens.js';
-import { frame, autoLayout, rect, text } from '../lib/layout.js';
-import { bindFill, bindStroke, bindText } from '../lib/componentKit.js';
+import { frame, autoLayout, text } from '../lib/layout.js';
+import { bindStroke, bindText } from '../lib/componentKit.js';
 
 export async function buildPlaygroundPage(tokens: Tokens, page: PageNode): Promise<void> {
+  // Remove any previous watermark we authored. Consumer content on this
+  // page is deliberately preserved.
+  for (const child of page.children.slice()) {
+    if (child.getPluginData('ppwf:playground-watermark') === 'true') child.remove();
+  }
   const w = frame('watermark', page);
+  w.setPluginData('ppwf:playground-watermark', 'true');
   autoLayout(w, 'v', 8, 32);
   w.primaryAxisSizingMode = 'FIXED'; w.counterAxisSizingMode = 'FIXED';
   w.counterAxisAlignItems = 'CENTER'; w.primaryAxisAlignItems = 'CENTER';

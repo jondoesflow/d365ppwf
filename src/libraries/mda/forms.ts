@@ -82,7 +82,7 @@ export async function buildMdaFormFields(page: PageNode, tokens: Tokens): Promis
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Multi-Line Text',     { label: 'Description',   value: 'Customer requires…',    multiline: true, appearance: 'outline' }));
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Option Set',          { label: 'Status',        value: 'In Progress',           trailingIcon: '▾', appearance: 'underline' }));
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Multi-Select Option Set', { label: 'Tags',      value: 'Cloud, ERP, Teams',     trailingIcon: '▾', appearance: 'underline' }));
-  sets.push(await buildField(page, tokens, 'MDA/Form/Field — Yes/No',              { label: 'Active',        value: 'Yes',                   appearance: 'underline' }));
+  sets.push(await buildField(page, tokens, 'MDA/Form/Field — Yes-No',              { label: 'Active',        value: 'Yes',                   appearance: 'underline' }));
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Date Only',           { label: 'Due date',      value: '04/20/2026',            trailingIcon: '📅', appearance: 'underline' }));
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Date and Time',       { label: 'Meeting',       value: '04/20/2026 09:30 AM',   trailingIcon: '🕑', appearance: 'underline' }));
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Number',              { label: 'Quantity',      value: '142',                   appearance: 'underline' }));
@@ -90,7 +90,7 @@ export async function buildMdaFormFields(page: PageNode, tokens: Tokens): Promis
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Lookup',              { label: 'Account',       value: 'Contoso Ltd',           trailingIcon: '🔎', appearance: 'underline' }));
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Customer Lookup',     { label: 'Customer',      value: 'Contoso Ltd (Account)', trailingIcon: '🔎', appearance: 'underline' }));
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Owner',               { label: 'Owner',         value: 'Avery Brooks',          trailingIcon: '🔎', appearance: 'underline' }));
-  sets.push(await buildField(page, tokens, 'MDA/Form/Field — File / Image',        { label: 'Attachment',    value: 'proposal-v2.pdf',       trailingIcon: '📎', appearance: 'outline' }));
+  sets.push(await buildField(page, tokens, 'MDA/Form/Field — File or Image',      { label: 'Attachment',    value: 'proposal-v2.pdf',       trailingIcon: '📎', appearance: 'outline' }));
   sets.push(await buildField(page, tokens, 'MDA/Form/Field — Rich Text',           { label: 'Notes',         value: 'Bold + italic supported',multiline: true, appearance: 'outline' }));
   return sets;
 }

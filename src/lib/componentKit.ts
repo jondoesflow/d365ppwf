@@ -5,7 +5,11 @@
  */
 
 import type { Tokens } from './tokens.js';
-import { remember } from './pluginData.js';
+import { remember, loadRegistry } from './pluginData.js';
+
+// Run-scoped counters. Reset at the start of each orchestrator run.
+export const runStats = { created: 0, updated: 0 };
+export function resetRunStats(): void { runStats.created = 0; runStats.updated = 0; }
 
 export function bindFill(node: SceneNode & MinimalFillsMixin, tokens: Tokens, key: string): void {
   const v = tokens.color.get(key);
@@ -58,9 +62,15 @@ export function publishSet(
   desc: { purpose: string; pp: string; docs?: string; },
   registryKey: string,
 ): ComponentSetNode {
+  // Detect whether the registry already knows this key to distinguish
+  // "created" from "updated" in run summaries. The actual node is fresh
+  // either way because the page was purged at the start of the run.
+  const reg = loadRegistry();
+  const wasKnown = Object.prototype.hasOwnProperty.call(reg, registryKey);
   const set = figma.combineAsVariants(variants, page);
   set.name = name;
   setDescription(set, desc.purpose, desc.pp, desc.docs);
   remember(registryKey, set);
+  if (wasKnown) runStats.updated += 1; else runStats.created += 1;
   return set;
 }

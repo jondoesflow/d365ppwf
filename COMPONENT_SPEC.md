@@ -133,7 +133,7 @@ script that derives this markdown automatically is a planned follow-up
 | `MDA/Form/Field — Multi-Line Text` | `State` |
 | `MDA/Form/Field — Option Set` | `State` |
 | `MDA/Form/Field — Multi-Select Option Set` | `State` |
-| `MDA/Form/Field — Yes/No` | `State` |
+| `MDA/Form/Field — Yes-No` | `State` |
 | `MDA/Form/Field — Date Only` | `State` |
 | `MDA/Form/Field — Date and Time` | `State` |
 | `MDA/Form/Field — Number` | `State` |
@@ -141,7 +141,7 @@ script that derives this markdown automatically is a planned follow-up
 | `MDA/Form/Field — Lookup` | `State` |
 | `MDA/Form/Field — Customer Lookup` | `State` |
 | `MDA/Form/Field — Owner` | `State` |
-| `MDA/Form/Field — File / Image` | `State` |
+| `MDA/Form/Field — File or Image` | `State` |
 | `MDA/Form/Field — Rich Text` | `State` |
 | `MDA/Form/Business Process Flow` | `Active` (0 / 1 / 2 / 3) |
 | `MDA/Form/Quick View Form` | — |

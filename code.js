@@ -912,6 +912,11 @@
   }
 
   // src/lib/componentKit.ts
+  var runStats = { created: 0, updated: 0 };
+  function resetRunStats() {
+    runStats.created = 0;
+    runStats.updated = 0;
+  }
   function bindFill(node, tokens, key) {
     const v = tokens.color.get(key);
     if (!v) return;
@@ -940,10 +945,14 @@
     n.description = parts.join("\n\n");
   }
   function publishSet(page, variants, name, desc, registryKey) {
+    const reg = loadRegistry();
+    const wasKnown = Object.prototype.hasOwnProperty.call(reg, registryKey);
     const set = figma.combineAsVariants(variants, page);
     set.name = name;
     setDescription2(set, desc.purpose, desc.pp, desc.docs);
     remember(registryKey, set);
+    if (wasKnown) runStats.updated += 1;
+    else runStats.created += 1;
     return set;
   }
 
@@ -3137,7 +3146,7 @@
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Multi-Line Text", { label: "Description", value: "Customer requires\u2026", multiline: true, appearance: "outline" }));
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Option Set", { label: "Status", value: "In Progress", trailingIcon: "\u25BE", appearance: "underline" }));
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Multi-Select Option Set", { label: "Tags", value: "Cloud, ERP, Teams", trailingIcon: "\u25BE", appearance: "underline" }));
-    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Yes/No", { label: "Active", value: "Yes", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Yes-No", { label: "Active", value: "Yes", appearance: "underline" }));
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Date Only", { label: "Due date", value: "04/20/2026", trailingIcon: "\u{1F4C5}", appearance: "underline" }));
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Date and Time", { label: "Meeting", value: "04/20/2026 09:30 AM", trailingIcon: "\u{1F551}", appearance: "underline" }));
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Number", { label: "Quantity", value: "142", appearance: "underline" }));
@@ -3145,7 +3154,7 @@
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Lookup", { label: "Account", value: "Contoso Ltd", trailingIcon: "\u{1F50E}", appearance: "underline" }));
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Customer Lookup", { label: "Customer", value: "Contoso Ltd (Account)", trailingIcon: "\u{1F50E}", appearance: "underline" }));
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Owner", { label: "Owner", value: "Avery Brooks", trailingIcon: "\u{1F50E}", appearance: "underline" }));
-    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 File / Image", { label: "Attachment", value: "proposal-v2.pdf", trailingIcon: "\u{1F4CE}", appearance: "outline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 File or Image", { label: "Attachment", value: "proposal-v2.pdf", trailingIcon: "\u{1F4CE}", appearance: "outline" }));
     sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Rich Text", { label: "Notes", value: "Bold + italic supported", multiline: true, appearance: "outline" }));
     return sets;
   }
@@ -5112,7 +5121,11 @@
 
   // src/pages/playground.ts
   async function buildPlaygroundPage(tokens, page) {
+    for (const child of page.children.slice()) {
+      if (child.getPluginData("ppwf:playground-watermark") === "true") child.remove();
+    }
     const w = frame("watermark", page);
+    w.setPluginData("ppwf:playground-watermark", "true");
     autoLayout(w, "v", 8, 32);
     w.primaryAxisSizingMode = "FIXED";
     w.counterAxisSizingMode = "FIXED";
@@ -5438,6 +5451,7 @@
   }
   async function run(opts, updateOnly) {
     const t0 = Date.now();
+    resetRunStats();
     progress(1, "Preloading fonts\u2026");
     await preloadFonts();
     progress(6, "Creating pages\u2026");
@@ -5464,26 +5478,21 @@
     await renderTokensPage(tokens, tokensPage);
     progress(20, "Building primitives\u2026");
     await figma.setCurrentPageAsync(primitivesPage);
-    const prim = await buildPrimitives(tokens, primitivesPage);
-    let created = prim.components.length;
-    let updated = 0;
+    await buildPrimitives(tokens, primitivesPage);
     if (canvasPage) {
       progress(35, "Building Canvas Apps\u2026");
       await figma.setCurrentPageAsync(canvasPage);
-      const out = await buildCanvasLibrary(tokens, canvasPage);
-      created += out.components.length;
+      await buildCanvasLibrary(tokens, canvasPage);
     }
     if (mdaPage) {
       progress(55, "Building Model-Driven Apps\u2026");
       await figma.setCurrentPageAsync(mdaPage);
-      const out = await buildMdaLibrary(tokens, mdaPage);
-      created += out.components.length;
+      await buildMdaLibrary(tokens, mdaPage);
     }
     if (flowPage) {
       progress(75, "Building Power Automate\u2026");
       await figma.setCurrentPageAsync(flowPage);
-      const out = await buildFlowLibrary(tokens, flowPage);
-      created += out.components.length;
+      await buildFlowLibrary(tokens, flowPage);
     }
     if (examplesPage) {
       progress(90, "Building examples\u2026");
@@ -5499,14 +5508,20 @@
     await figma.setCurrentPageAsync(readmePage);
     progress(100, "Done.");
     const elapsed = ((Date.now() - t0) / 1e3).toFixed(1);
-    figma.notify(`Library generated in ${elapsed}s \u2014 ${created} components.`);
+    const total = runStats.created + runStats.updated;
+    figma.notify(`Library ${updateOnly ? "updated" : "generated"} in ${elapsed}s \u2014 ${total} Component Sets.`);
     figma.ui.postMessage({
       type: "done",
-      created,
-      updated,
+      created: runStats.created,
+      updated: runStats.updated,
       tokens: tokens.color.size + tokens.space.size + tokens.radius.size + tokens.stroke.size + tokens.type.size + tokens.elevation.size,
-      size: "\u2248 \u2014 MB"
-      // Increment 10 will compute a real estimate.
+      size: estimateFileSize(total)
     });
+  }
+  function estimateFileSize(totalSets) {
+    const kb = Math.round(totalSets * 7 + 500);
+    if (kb < 1024) return `\u2248 ${kb} KB`;
+    const mb = (kb / 1024).toFixed(1);
+    return `\u2248 ${mb} MB`;
   }
 })();

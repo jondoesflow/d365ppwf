@@ -17,6 +17,7 @@ import { buildFlowLibrary } from './libraries/flow/index.js';
 import { buildReadmePage } from './pages/readme.js';
 import { buildPlaygroundPage } from './pages/playground.js';
 import { buildExamplesPage } from './pages/examples.js';
+import { runStats, resetRunStats } from './lib/componentKit.js';
 
 figma.showUI(__html__, { width: 340, height: 560, themeColors: true });
 
@@ -96,6 +97,7 @@ async function purgePage(page: PageNode): Promise<void> {
 
 async function run(opts: GenerateOptions, updateOnly: boolean): Promise<void> {
   const t0 = Date.now();
+  resetRunStats();
   progress(1, 'Preloading fonts…');
   await preloadFonts();
 
@@ -130,28 +132,22 @@ async function run(opts: GenerateOptions, updateOnly: boolean): Promise<void> {
 
   progress(20, 'Building primitives…');
   await figma.setCurrentPageAsync(primitivesPage);
-  const prim = await buildPrimitives(tokens, primitivesPage);
-
-  let created = prim.components.length;
-  let updated = 0;
+  await buildPrimitives(tokens, primitivesPage);
 
   if (canvasPage) {
     progress(35, 'Building Canvas Apps…');
     await figma.setCurrentPageAsync(canvasPage);
-    const out = await buildCanvasLibrary(tokens, canvasPage);
-    created += out.components.length;
+    await buildCanvasLibrary(tokens, canvasPage);
   }
   if (mdaPage) {
     progress(55, 'Building Model-Driven Apps…');
     await figma.setCurrentPageAsync(mdaPage);
-    const out = await buildMdaLibrary(tokens, mdaPage);
-    created += out.components.length;
+    await buildMdaLibrary(tokens, mdaPage);
   }
   if (flowPage) {
     progress(75, 'Building Power Automate…');
     await figma.setCurrentPageAsync(flowPage);
-    const out = await buildFlowLibrary(tokens, flowPage);
-    created += out.components.length;
+    await buildFlowLibrary(tokens, flowPage);
   }
 
   if (examplesPage) {
@@ -173,13 +169,27 @@ async function run(opts: GenerateOptions, updateOnly: boolean): Promise<void> {
 
   progress(100, 'Done.');
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
-  figma.notify(`Library generated in ${elapsed}s — ${created} components.`);
+  const total = runStats.created + runStats.updated;
+  figma.notify(`Library ${updateOnly ? 'updated' : 'generated'} in ${elapsed}s — ${total} Component Sets.`);
 
   figma.ui.postMessage({
     type: 'done',
-    created,
-    updated,
+    created: runStats.created,
+    updated: runStats.updated,
     tokens: tokens.color.size + tokens.space.size + tokens.radius.size + tokens.stroke.size + tokens.type.size + tokens.elevation.size,
-    size: '≈ — MB', // Increment 10 will compute a real estimate.
+    size: estimateFileSize(total),
   });
+}
+
+/**
+ * Rough file-size estimate for the UI summary. Component Sets contribute
+ * most of the weight at ~7 KB each on average (vectors + auto-layout);
+ * token collections and pages contribute a fixed overhead. Target: keep
+ * the generated file under 15 MB per the acceptance criteria.
+ */
+function estimateFileSize(totalSets: number): string {
+  const kb = Math.round(totalSets * 7 + 500);
+  if (kb < 1024) return `≈ ${kb} KB`;
+  const mb = (kb / 1024).toFixed(1);
+  return `≈ ${mb} MB`;
 }
