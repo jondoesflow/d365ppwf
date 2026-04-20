@@ -309,6 +309,34 @@
     if (parent) parent.appendChild(t);
     return t;
   }
+  function placeGrid(items, opts = {}) {
+    const cols = opts.cols ?? 4;
+    const gap = opts.gap ?? 64;
+    const x0 = opts.x ?? 0;
+    const y0 = opts.y ?? 0;
+    const rowHeights = [];
+    const colWidths = [];
+    for (let i = 0; i < items.length; i++) {
+      const r2 = Math.floor(i / cols);
+      const c2 = i % cols;
+      const node = items[i];
+      rowHeights[r2] = Math.max(rowHeights[r2] ?? 0, node.height);
+      colWidths[c2] = Math.max(colWidths[c2] ?? 0, node.width);
+    }
+    let totalW = 0;
+    for (const w of colWidths) totalW += w + gap;
+    let totalH = 0;
+    for (const h of rowHeights) totalH += h + gap;
+    for (let i = 0; i < items.length; i++) {
+      const r2 = Math.floor(i / cols);
+      const c2 = i % cols;
+      const x = x0 + colWidths.slice(0, c2).reduce((a, b) => a + b + gap, 0);
+      const y = y0 + rowHeights.slice(0, r2).reduce((a, b) => a + b + gap, 0);
+      items[i].x = x;
+      items[i].y = y;
+    }
+    return { width: totalW - gap, height: totalH - gap };
+  }
 
   // src/lib/tokensPage.ts
   var PAD = 40;
@@ -883,9 +911,1614 @@
     return { components: [], sets, iconByName };
   }
 
+  // src/lib/componentKit.ts
+  function bindFill(node, tokens, key) {
+    const v = tokens.color.get(key);
+    if (!v) return;
+    const paint = { type: "SOLID", color: { r: 0, g: 0, b: 0 } };
+    node.fills = [figma.variables.setBoundVariableForPaint(paint, "color", v)];
+  }
+  function bindStroke(node, tokens, key, weight = 1) {
+    const v = tokens.color.get(key);
+    if (!v) return;
+    const paint = { type: "SOLID", color: { r: 0, g: 0, b: 0 } };
+    node.strokes = [figma.variables.setBoundVariableForPaint(paint, "color", v)];
+    node.strokeWeight = weight;
+  }
+  function bindText(node, tokens, key) {
+    const v = tokens.color.get(key);
+    if (!v) return;
+    const paint = { type: "SOLID", color: { r: 0, g: 0, b: 0 } };
+    node.fills = [figma.variables.setBoundVariableForPaint(paint, "color", v)];
+  }
+  function setDescription2(n, purpose, ppName, docs) {
+    const parts = [
+      `**Purpose:** ${purpose}`,
+      `**Power Platform equivalent:** ${ppName}`
+    ];
+    if (docs) parts.push(`**Docs:** ${docs}`);
+    n.description = parts.join("\n\n");
+  }
+  function publishSet(page, variants, name, desc, registryKey) {
+    const set = figma.combineAsVariants(variants, page);
+    set.name = name;
+    setDescription2(set, desc.purpose, desc.pp, desc.docs);
+    remember(registryKey, set);
+    return set;
+  }
+
+  // src/libraries/canvas/structural.ts
+  async function buildScreenBlank(page, tokens) {
+    const variants = [];
+    const presets = [
+      { key: "Desktop", w: 1366, h: 768 },
+      { key: "Phone", w: 640, h: 1136 }
+    ];
+    for (const p2 of presets) {
+      const f = frame(`Device=${p2.key}`, void 0);
+      f.resize(p2.w, p2.h);
+      f.clipsContent = true;
+      bindFill(f, tokens, "color/canvas/background");
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Screen/Blank", {
+      purpose: "Blank app screen at common Canvas size presets.",
+      pp: "Screen (Canvas Apps).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/add-screen-context-variables"
+    }, "canvas/screen/blank");
+  }
+  async function buildScreenScrollable(page, tokens) {
+    const variants = [];
+    const presets = [
+      { key: "Desktop", w: 1366, h: 768 },
+      { key: "Phone", w: 640, h: 1136 }
+    ];
+    for (const p2 of presets) {
+      const f = frame(`Device=${p2.key}`, void 0);
+      autoLayout(f, "v", 0, 0);
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(p2.w, p2.h);
+      f.clipsContent = true;
+      bindFill(f, tokens, "color/canvas/background");
+      const hdr = frame("sticky-header", f);
+      autoLayout(hdr, "h", 12, 16);
+      hdr.primaryAxisSizingMode = "FIXED";
+      hdr.counterAxisSizingMode = "FIXED";
+      hdr.resize(p2.w, 56);
+      bindFill(hdr, tokens, "color/canvas/surface");
+      bindStroke(hdr, tokens, "color/stroke/subtle", 1);
+      const body = rect("body-placeholder", p2.w, p2.h - 56, f);
+      body.fills = [];
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Screen/Scrollable", {
+      purpose: "Screen with a sticky header slot above a scrollable body.",
+      pp: "Screen with docked Header container (Canvas Apps)."
+    }, "canvas/screen/scrollable");
+  }
+  async function buildContainer(page, tokens, dir, name, pp, key) {
+    const variants = [];
+    for (const gap of [8, 16, 24]) {
+      const f = frame(`Gap=${gap}`, void 0);
+      autoLayout(f, dir, gap, 16);
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(dir === "h" ? 480 : 240, dir === "h" ? 80 : 320);
+      bindFill(f, tokens, "color/canvas/surface");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      for (let i = 0; i < 3; i++) {
+        const box = rect(`slot-${i}`, dir === "h" ? 120 : 200, dir === "h" ? 48 : 60, f);
+        box.cornerRadius = 4;
+        bindFill(box, tokens, "color/canvas/surface-alt");
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, name, {
+      purpose: `${dir === "h" ? "Horizontal" : "Vertical"} auto-layout container with configurable gap.`,
+      pp,
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/control-horizontal-container"
+    }, key);
+  }
+  async function buildGridContainer(page, tokens) {
+    const f = frame("Cols=12", void 0);
+    autoLayout(f, "h", 16, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(1280, 120);
+    bindFill(f, tokens, "color/canvas/surface");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    for (let i = 0; i < 12; i++) {
+      const col = rect(`col-${i + 1}`, 88, 88, f);
+      col.cornerRadius = 4;
+      bindFill(col, tokens, "color/canvas/surface-alt");
+    }
+    const variants = [figma.createComponentFromNode(f)];
+    return publishSet(page, variants, "Canvas/Container/Grid", {
+      purpose: "12-column responsive grid reference.",
+      pp: "Horizontal container pattern with equal flex slots."
+    }, "canvas/container/grid");
+  }
+  async function buildCanvasStructural(page, tokens) {
+    return [
+      await buildScreenBlank(page, tokens),
+      await buildScreenScrollable(page, tokens),
+      await buildContainer(page, tokens, "h", "Canvas/Container/Horizontal", "Horizontal container (Canvas Apps).", "canvas/container/horizontal"),
+      await buildContainer(page, tokens, "v", "Canvas/Container/Vertical", "Vertical container (Canvas Apps).", "canvas/container/vertical"),
+      await buildGridContainer(page, tokens)
+    ];
+  }
+
+  // src/libraries/canvas/navigation.ts
+  async function buildAppHeader(page, tokens) {
+    const variants = [];
+    for (const width of [1280, 768]) {
+      const f = frame(`Width=${width}`, void 0);
+      autoLayout(f, "h", 16, { l: 20, r: 20, t: 0, b: 0 });
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.counterAxisAlignItems = "CENTER";
+      f.resize(width, 56);
+      bindFill(f, tokens, "color/brand/primary");
+      const logo = rect("logo", 28, 28, f);
+      logo.cornerRadius = 4;
+      bindFill(logo, tokens, "color/canvas/background");
+      const title = await text("App Title", "semibold", 16, f);
+      bindText(title, tokens, "color/canvas/background");
+      const pad = rect("pad", 1, 1, f);
+      pad.fills = [];
+      pad.layoutGrow = 1;
+      const av = ellipse("avatar", 32, 32, f);
+      bindFill(av, tokens, "color/brand/primary-hover");
+      const over = await text("\u22EF", "bold", 20, f);
+      bindText(over, tokens, "color/canvas/background");
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Nav/App Header", {
+      purpose: "Top-bar with logo, title, and trailing user/overflow.",
+      pp: "App header container (Canvas Apps Modern Controls)."
+    }, "canvas/nav/app-header");
+  }
+  async function buildSideMenu(page, tokens) {
+    const variants = [];
+    for (const state of ["Expanded", "Collapsed"]) {
+      const w = state === "Expanded" ? 240 : 64;
+      const f = frame(`State=${state}`, void 0);
+      autoLayout(f, "v", 4, { l: 8, r: 8, t: 12, b: 12 });
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(w, 480);
+      bindFill(f, tokens, "color/canvas/surface");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      for (let i = 0; i < 6; i++) {
+        const row = frame(`item-${i}`, f);
+        autoLayout(row, "h", 12, { l: 12, r: 12, t: 0, b: 0 });
+        row.primaryAxisSizingMode = "FIXED";
+        row.counterAxisSizingMode = "FIXED";
+        row.counterAxisAlignItems = "CENTER";
+        row.resize(w - 16, 36);
+        row.cornerRadius = 4;
+        if (i === 0) bindFill(row, tokens, "color/canvas/surface-alt");
+        const ic = rect("icon", 20, 20, row);
+        bindFill(ic, tokens, i === 0 ? "color/brand/primary" : "color/text/secondary");
+        if (state === "Expanded") {
+          const lbl = await text(["Dashboard", "Records", "Activities", "Reports", "Tools", "Settings"][i], i === 0 ? "semibold" : "regular", 14, row);
+          bindText(lbl, tokens, i === 0 ? "color/brand/primary" : "color/text/primary");
+        }
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Nav/Side Menu", {
+      purpose: "Vertical navigation rail, expandable to reveal labels.",
+      pp: "Side navigation pattern (Canvas Apps)."
+    }, "canvas/nav/side-menu");
+  }
+  async function buildBreadcrumb(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 8, 0);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "AUTO";
+    f.counterAxisAlignItems = "CENTER";
+    const parts = ["Home", "Projects", "Cloud migration"];
+    for (let i = 0; i < parts.length; i++) {
+      const t = await text(parts[i], i === parts.length - 1 ? "semibold" : "regular", 13, f);
+      bindText(t, tokens, i === parts.length - 1 ? "color/text/primary" : "color/text/secondary");
+      if (i < parts.length - 1) {
+        const sep = await text("\u203A", "regular", 13, f);
+        bindText(sep, tokens, "color/text/secondary");
+      }
+    }
+    const variants = [figma.createComponentFromNode(f)];
+    return publishSet(page, variants, "Canvas/Nav/Breadcrumb", {
+      purpose: "Hierarchical location indicator.",
+      pp: "Breadcrumb pattern (Canvas Apps)."
+    }, "canvas/nav/breadcrumb");
+  }
+  async function buildTabs(page, tokens) {
+    const variants = [];
+    for (const selected of [0, 1, 2]) {
+      const f = frame(`Selected=${selected}`, void 0);
+      autoLayout(f, "h", 4, 0);
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "AUTO";
+      const labels = ["Overview", "Activities", "Files"];
+      for (let i = 0; i < labels.length; i++) {
+        const tab = frame(`tab-${i}`, f);
+        autoLayout(tab, "v", 6, { l: 16, r: 16, t: 10, b: 10 });
+        tab.primaryAxisSizingMode = "AUTO";
+        tab.counterAxisSizingMode = "AUTO";
+        tab.counterAxisAlignItems = "CENTER";
+        const lab = await text(labels[i], i === selected ? "semibold" : "regular", 14, tab);
+        bindText(lab, tokens, i === selected ? "color/brand/primary" : "color/text/secondary");
+        const under = rect("underline", 1, 2, tab);
+        under.layoutGrow = 1;
+        if (i === selected) bindFill(under, tokens, "color/brand/primary");
+        else under.fills = [];
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Nav/Tabs", {
+      purpose: "Horizontal tab selector with underline indicator.",
+      pp: "Tablist (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-tablist"
+    }, "canvas/nav/tabs");
+  }
+  async function buildCanvasNavigation(page, tokens) {
+    return [
+      await buildAppHeader(page, tokens),
+      await buildSideMenu(page, tokens),
+      await buildBreadcrumb(page, tokens),
+      await buildTabs(page, tokens)
+    ];
+  }
+
+  // src/libraries/canvas/inputs.ts
+  function borderFor(state) {
+    switch (state) {
+      case "Focus":
+        return "color/brand/primary";
+      case "Error":
+        return "color/status/danger";
+      case "Disabled":
+      case "Readonly":
+        return "color/stroke/subtle";
+      default:
+        return "color/stroke/default";
+    }
+  }
+  function bgFor(state) {
+    return state === "Disabled" ? "color/canvas/surface-alt" : "color/canvas/background";
+  }
+  function textColorFor(state) {
+    return state === "Disabled" ? "color/text/disabled" : "color/text/primary";
+  }
+  async function buildLabelledField(tokens, state, render) {
+    const outer = frame(`State=${state}`, void 0);
+    autoLayout(outer, "v", 4, 0);
+    outer.primaryAxisSizingMode = "AUTO";
+    outer.counterAxisSizingMode = "FIXED";
+    outer.resize(260, 1);
+    const label = await text("Label", "semibold", 12, outer);
+    bindText(label, tokens, "color/text/primary");
+    const box = frame("box", outer);
+    autoLayout(box, "h", 8, { l: 12, r: 12, t: 0, b: 0 });
+    box.counterAxisSizingMode = "FIXED";
+    box.primaryAxisSizingMode = "FIXED";
+    box.counterAxisAlignItems = "CENTER";
+    box.resize(260, 32);
+    box.cornerRadius = 4;
+    bindFill(box, tokens, bgFor(state));
+    bindStroke(box, tokens, borderFor(state), state === "Focus" ? 2 : 1);
+    await render(box);
+    if (state === "Error") {
+      const msg = await text("This field is required", "regular", 11, outer);
+      bindText(msg, tokens, "color/status/danger");
+    } else {
+      const hint = await text("Helper text", "regular", 11, outer);
+      bindText(hint, tokens, "color/text/secondary");
+    }
+    return figma.createComponentFromNode(outer);
+  }
+  async function buildTextInput(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Hover", "Focus", "Error", "Disabled", "Readonly"]) {
+      variants.push(await buildLabelledField(tokens, state, async (box) => {
+        const val = await text("Enter value\u2026", "regular", 14, box);
+        bindText(val, tokens, state === "Default" ? "color/text/secondary" : textColorFor(state));
+      }));
+    }
+    return publishSet(page, variants, "Canvas/Input/Text Input", {
+      purpose: "Single-line text entry.",
+      pp: "Text input (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-text-input"
+    }, "canvas/input/text");
+  }
+  async function buildTextArea(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Focus", "Error", "Disabled"]) {
+      const outer = frame(`State=${state}`, void 0);
+      autoLayout(outer, "v", 4, 0);
+      outer.primaryAxisSizingMode = "AUTO";
+      outer.counterAxisSizingMode = "FIXED";
+      outer.resize(260, 1);
+      const label = await text("Notes", "semibold", 12, outer);
+      bindText(label, tokens, "color/text/primary");
+      const box = frame("box", outer);
+      autoLayout(box, "v", 4, 12);
+      box.counterAxisSizingMode = "FIXED";
+      box.primaryAxisSizingMode = "FIXED";
+      box.resize(260, 90);
+      box.cornerRadius = 4;
+      bindFill(box, tokens, bgFor(state));
+      bindStroke(box, tokens, borderFor(state), state === "Focus" ? 2 : 1);
+      for (let i = 0; i < 3; i++) {
+        const ln = rect("line", 220, 1, box);
+        bindFill(ln, tokens, "color/stroke/subtle");
+      }
+      variants.push(figma.createComponentFromNode(outer));
+    }
+    return publishSet(page, variants, "Canvas/Input/Text Area", {
+      purpose: "Multi-line text entry (default 3 rows).",
+      pp: "Text input with multiline = true."
+    }, "canvas/input/text-area");
+  }
+  async function buildDropdown(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Focus", "Disabled"]) {
+      for (const open of ["Closed", "Open"]) {
+        const outer = frame(`State=${state}, Open=${open}`, void 0);
+        autoLayout(outer, "v", 4, 0);
+        outer.primaryAxisSizingMode = "AUTO";
+        outer.counterAxisSizingMode = "FIXED";
+        outer.resize(260, 1);
+        const label = await text("Select option", "semibold", 12, outer);
+        bindText(label, tokens, "color/text/primary");
+        const box = frame("box", outer);
+        autoLayout(box, "h", 8, { l: 12, r: 12, t: 0, b: 0 });
+        box.counterAxisSizingMode = "FIXED";
+        box.primaryAxisSizingMode = "FIXED";
+        box.counterAxisAlignItems = "CENTER";
+        box.resize(260, 32);
+        box.cornerRadius = 4;
+        bindFill(box, tokens, bgFor(state));
+        bindStroke(box, tokens, borderFor(state), state === "Focus" ? 2 : 1);
+        const val = await text("\u2014 Select \u2014", "regular", 14, box);
+        bindText(val, tokens, "color/text/secondary");
+        const pad = rect("pad", 1, 1, box);
+        pad.fills = [];
+        pad.layoutGrow = 1;
+        const chev = await text("\u25BE", "bold", 12, box);
+        bindText(chev, tokens, "color/text/secondary");
+        if (open === "Open") {
+          const menu = frame("menu", outer);
+          autoLayout(menu, "v", 0, 4);
+          menu.primaryAxisSizingMode = "AUTO";
+          menu.counterAxisSizingMode = "FIXED";
+          menu.resize(260, 1);
+          menu.cornerRadius = 4;
+          bindFill(menu, tokens, "color/canvas/background");
+          bindStroke(menu, tokens, "color/stroke/default", 1);
+          for (const label2 of ["Option A", "Option B", "Option C"]) {
+            const row = frame("row", menu);
+            autoLayout(row, "h", 0, { l: 12, r: 12, t: 6, b: 6 });
+            row.counterAxisSizingMode = "FIXED";
+            row.primaryAxisSizingMode = "FIXED";
+            row.counterAxisAlignItems = "CENTER";
+            row.resize(252, 28);
+            const t = await text(label2, "regular", 14, row);
+            bindText(t, tokens, "color/text/primary");
+          }
+        }
+        variants.push(figma.createComponentFromNode(outer));
+      }
+    }
+    return publishSet(page, variants, "Canvas/Input/Dropdown", {
+      purpose: "Single-select dropdown with closed and open states.",
+      pp: "Dropdown (Modern Controls) / Combo box single-select.",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-dropdown"
+    }, "canvas/input/dropdown");
+  }
+  async function buildToggleSet(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Hover", "Disabled"]) {
+      for (const on of ["On", "Off"]) {
+        const outer = frame(`State=${state}, Value=${on}`, void 0);
+        autoLayout(outer, "h", 8, 0);
+        outer.primaryAxisSizingMode = "AUTO";
+        outer.counterAxisSizingMode = "AUTO";
+        outer.counterAxisAlignItems = "CENTER";
+        const track = frame("track", outer);
+        autoLayout(track, "h", 0, 2);
+        track.primaryAxisSizingMode = "FIXED";
+        track.counterAxisSizingMode = "FIXED";
+        track.counterAxisAlignItems = "CENTER";
+        track.primaryAxisAlignItems = on === "On" ? "MAX" : "MIN";
+        track.resize(36, 20);
+        track.cornerRadius = 10;
+        if (state === "Disabled") bindFill(track, tokens, "color/canvas/surface-alt");
+        else bindFill(track, tokens, on === "On" ? "color/brand/primary" : "color/canvas/surface-alt");
+        const thumb = ellipse("thumb", 16, 16, track);
+        bindFill(thumb, tokens, "color/canvas/background");
+        const label = await text("Toggle label", "regular", 14, outer);
+        bindText(label, tokens, state === "Disabled" ? "color/text/disabled" : "color/text/primary");
+        variants.push(figma.createComponentFromNode(outer));
+      }
+    }
+    return publishSet(page, variants, "Canvas/Input/Toggle", {
+      purpose: "Binary on/off switch.",
+      pp: "Toggle (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-toggle"
+    }, "canvas/input/toggle");
+  }
+  async function buildCheckboxSet(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Hover", "Disabled"]) {
+      for (const value of ["Unchecked", "Checked", "Indeterminate"]) {
+        const outer = frame(`State=${state}, Value=${value}`, void 0);
+        autoLayout(outer, "h", 8, 0);
+        outer.primaryAxisSizingMode = "AUTO";
+        outer.counterAxisSizingMode = "AUTO";
+        outer.counterAxisAlignItems = "CENTER";
+        const box = rect("box", 16, 16, outer);
+        box.cornerRadius = 2;
+        if (value === "Unchecked") {
+          bindFill(box, tokens, "color/canvas/background");
+          bindStroke(box, tokens, state === "Disabled" ? "color/stroke/subtle" : "color/stroke/default");
+        } else {
+          bindFill(box, tokens, state === "Disabled" ? "color/text/disabled" : "color/brand/primary");
+        }
+        if (value === "Checked") {
+          const chk = await text("\u2713", "bold", 12, outer);
+          chk.x = 1;
+          chk.y = 0;
+          bindText(chk, tokens, "color/canvas/background");
+        } else if (value === "Indeterminate") {
+          const bar = rect("bar", 8, 2, outer);
+          bindFill(bar, tokens, "color/canvas/background");
+        }
+        const label = await text("Option", "regular", 14, outer);
+        bindText(label, tokens, state === "Disabled" ? "color/text/disabled" : "color/text/primary");
+        variants.push(figma.createComponentFromNode(outer));
+      }
+    }
+    return publishSet(page, variants, "Canvas/Input/Checkbox", {
+      purpose: "Binary or tri-state boolean selector.",
+      pp: "Checkbox (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-checkbox"
+    }, "canvas/input/checkbox");
+  }
+  async function buildRadioGroup(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Disabled"]) {
+      const outer = frame(`State=${state}`, void 0);
+      autoLayout(outer, "v", 8, 0);
+      outer.primaryAxisSizingMode = "AUTO";
+      outer.counterAxisSizingMode = "FIXED";
+      outer.resize(220, 1);
+      for (let i = 0; i < 3; i++) {
+        const row = frame("row", outer);
+        autoLayout(row, "h", 8, 0);
+        row.counterAxisAlignItems = "CENTER";
+        row.primaryAxisSizingMode = "AUTO";
+        row.counterAxisSizingMode = "AUTO";
+        const ring = ellipse("ring", 16, 16, row);
+        bindFill(ring, tokens, "color/canvas/background");
+        bindStroke(ring, tokens, i === 0 ? "color/brand/primary" : "color/stroke/default", i === 0 ? 5 : 1);
+        const lbl = await text(["Option A", "Option B", "Option C"][i], "regular", 14, row);
+        bindText(lbl, tokens, state === "Disabled" ? "color/text/disabled" : "color/text/primary");
+      }
+      variants.push(figma.createComponentFromNode(outer));
+    }
+    return publishSet(page, variants, "Canvas/Input/Radio Group", {
+      purpose: "Mutually exclusive selection from a small set of options.",
+      pp: "Radio (Modern Controls) in a group container.",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-radio"
+    }, "canvas/input/radio");
+  }
+  async function buildSlider(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Disabled"]) {
+      const outer = frame(`State=${state}`, void 0);
+      autoLayout(outer, "v", 8, 0);
+      outer.primaryAxisSizingMode = "AUTO";
+      outer.counterAxisSizingMode = "FIXED";
+      outer.resize(260, 1);
+      const label = await text("Slider", "semibold", 12, outer);
+      bindText(label, tokens, "color/text/primary");
+      const row = frame("row", outer);
+      autoLayout(row, "h", 12, 0);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.counterAxisAlignItems = "CENTER";
+      row.resize(260, 20);
+      const track = rect("track", 210, 4, row);
+      track.cornerRadius = 2;
+      bindFill(track, tokens, "color/canvas/surface-alt");
+      const filled = rect("filled", 120, 4, row);
+      filled.layoutPositioning = "ABSOLUTE";
+      filled.x = 0;
+      filled.y = 8;
+      filled.cornerRadius = 2;
+      bindFill(filled, tokens, state === "Disabled" ? "color/stroke/default" : "color/brand/primary");
+      const thumb = ellipse("thumb", 16, 16, row);
+      thumb.layoutPositioning = "ABSOLUTE";
+      thumb.x = 114;
+      thumb.y = 2;
+      bindFill(thumb, tokens, "color/canvas/background");
+      bindStroke(thumb, tokens, state === "Disabled" ? "color/stroke/default" : "color/brand/primary", 2);
+      const val = await text("50", "semibold", 12, row);
+      bindText(val, tokens, "color/text/primary");
+      variants.push(figma.createComponentFromNode(outer));
+    }
+    return publishSet(page, variants, "Canvas/Input/Slider", {
+      purpose: "Continuous numeric selection along a range.",
+      pp: "Slider (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-slider"
+    }, "canvas/input/slider");
+  }
+  async function buildRating(page, tokens) {
+    const variants = [];
+    for (const value of [0, 1, 2, 3, 4, 5]) {
+      const f = frame(`Value=${value}`, void 0);
+      autoLayout(f, "h", 4, 0);
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "AUTO";
+      for (let i = 0; i < 5; i++) {
+        const star = await text("\u2605", "bold", 18, f);
+        bindText(star, tokens, i < value ? "color/status/warning" : "color/stroke/default");
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Input/Rating", {
+      purpose: "Discrete rating, commonly 0\u20135 stars.",
+      pp: "Rating (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/control-rating"
+    }, "canvas/input/rating");
+  }
+  async function buildNumberInput(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Focus", "Disabled"]) {
+      const outer = frame(`State=${state}`, void 0);
+      autoLayout(outer, "v", 4, 0);
+      outer.primaryAxisSizingMode = "AUTO";
+      outer.counterAxisSizingMode = "FIXED";
+      outer.resize(180, 1);
+      const label = await text("Quantity", "semibold", 12, outer);
+      bindText(label, tokens, "color/text/primary");
+      const row = frame("row", outer);
+      autoLayout(row, "h", 0, 0);
+      row.counterAxisSizingMode = "FIXED";
+      row.primaryAxisSizingMode = "FIXED";
+      row.resize(180, 32);
+      row.cornerRadius = 4;
+      bindFill(row, tokens, bgFor(state));
+      bindStroke(row, tokens, borderFor(state), state === "Focus" ? 2 : 1);
+      const minus = frame("minus", row);
+      autoLayout(minus, "h", 0, 0);
+      minus.primaryAxisAlignItems = "CENTER";
+      minus.counterAxisAlignItems = "CENTER";
+      minus.primaryAxisSizingMode = "FIXED";
+      minus.counterAxisSizingMode = "FIXED";
+      minus.resize(30, 32);
+      const mt = await text("\u2212", "bold", 18, minus);
+      bindText(mt, tokens, "color/text/primary");
+      const valBox = frame("value", row);
+      autoLayout(valBox, "h", 0, 0);
+      valBox.primaryAxisAlignItems = "CENTER";
+      valBox.counterAxisAlignItems = "CENTER";
+      valBox.primaryAxisSizingMode = "FIXED";
+      valBox.counterAxisSizingMode = "FIXED";
+      valBox.resize(120, 32);
+      const v = await text("1", "regular", 14, valBox);
+      bindText(v, tokens, "color/text/primary");
+      const plus = frame("plus", row);
+      autoLayout(plus, "h", 0, 0);
+      plus.primaryAxisAlignItems = "CENTER";
+      plus.counterAxisAlignItems = "CENTER";
+      plus.primaryAxisSizingMode = "FIXED";
+      plus.counterAxisSizingMode = "FIXED";
+      plus.resize(30, 32);
+      const pt = await text("+", "bold", 18, plus);
+      bindText(pt, tokens, "color/text/primary");
+      variants.push(figma.createComponentFromNode(outer));
+    }
+    return publishSet(page, variants, "Canvas/Input/Number Input", {
+      purpose: "Integer entry with stepper buttons.",
+      pp: "Number input (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-number-input"
+    }, "canvas/input/number");
+  }
+  async function buildComboBox(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Focus"]) {
+      const outer = frame(`State=${state}`, void 0);
+      autoLayout(outer, "v", 4, 0);
+      outer.primaryAxisSizingMode = "AUTO";
+      outer.counterAxisSizingMode = "FIXED";
+      outer.resize(320, 1);
+      const label = await text("Assignees", "semibold", 12, outer);
+      bindText(label, tokens, "color/text/primary");
+      const box = frame("box", outer);
+      autoLayout(box, "h", 6, { l: 8, r: 8, t: 4, b: 4 });
+      box.counterAxisSizingMode = "AUTO";
+      box.primaryAxisSizingMode = "FIXED";
+      box.resize(320, 1);
+      box.cornerRadius = 4;
+      bindFill(box, tokens, bgFor(state));
+      bindStroke(box, tokens, borderFor(state), state === "Focus" ? 2 : 1);
+      for (const name of ["Avery", "Morgan", "Jess"]) {
+        const chip = frame("chip", box);
+        autoLayout(chip, "h", 4, { l: 6, r: 6, t: 2, b: 2 });
+        chip.counterAxisSizingMode = "AUTO";
+        chip.primaryAxisSizingMode = "AUTO";
+        chip.counterAxisAlignItems = "CENTER";
+        chip.cornerRadius = 4;
+        bindFill(chip, tokens, "color/canvas/surface-alt");
+        const nm = await text(name, "medium", 12, chip);
+        bindText(nm, tokens, "color/text/primary");
+        const x = await text("\xD7", "bold", 12, chip);
+        bindText(x, tokens, "color/text/secondary");
+      }
+      variants.push(figma.createComponentFromNode(outer));
+    }
+    return publishSet(page, variants, "Canvas/Input/Combo Box", {
+      purpose: "Multi-select with chip-style chosen items.",
+      pp: "Combo box (Modern Controls) with SelectMultiple = true.",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-combobox"
+    }, "canvas/input/combo-box");
+  }
+  async function buildDatePicker(page, tokens) {
+    const variants = [];
+    for (const state of ["Closed", "Open"]) {
+      const outer = frame(`State=${state}`, void 0);
+      autoLayout(outer, "v", 4, 0);
+      outer.primaryAxisSizingMode = "AUTO";
+      outer.counterAxisSizingMode = "FIXED";
+      outer.resize(260, 1);
+      const label = await text("Due date", "semibold", 12, outer);
+      bindText(label, tokens, "color/text/primary");
+      const box = frame("box", outer);
+      autoLayout(box, "h", 8, { l: 12, r: 12, t: 0, b: 0 });
+      box.counterAxisSizingMode = "FIXED";
+      box.primaryAxisSizingMode = "FIXED";
+      box.counterAxisAlignItems = "CENTER";
+      box.resize(260, 32);
+      box.cornerRadius = 4;
+      bindFill(box, tokens, "color/canvas/background");
+      bindStroke(box, tokens, "color/stroke/default", 1);
+      const v = await text("Apr 20, 2026", "regular", 14, box);
+      bindText(v, tokens, "color/text/primary");
+      const pad = rect("pad", 1, 1, box);
+      pad.fills = [];
+      pad.layoutGrow = 1;
+      const cal = await text("\u{1F4C5}", "regular", 14, box);
+      if (state === "Open") {
+        const cal2 = frame("calendar", outer);
+        autoLayout(cal2, "v", 4, 8);
+        cal2.primaryAxisSizingMode = "AUTO";
+        cal2.counterAxisSizingMode = "FIXED";
+        cal2.resize(260, 1);
+        cal2.cornerRadius = 4;
+        bindFill(cal2, tokens, "color/canvas/background");
+        bindStroke(cal2, tokens, "color/stroke/default", 1);
+        const hdr = await text("April 2026", "semibold", 13, cal2);
+        bindText(hdr, tokens, "color/text/primary");
+        for (let r2 = 0; r2 < 5; r2++) {
+          const row = frame("row", cal2);
+          autoLayout(row, "h", 4, 0);
+          row.primaryAxisSizingMode = "FIXED";
+          row.counterAxisSizingMode = "AUTO";
+          row.resize(244, 1);
+          for (let c2 = 0; c2 < 7; c2++) {
+            const cell = frame("cell", row);
+            autoLayout(cell, "h", 0, 0);
+            cell.primaryAxisAlignItems = "CENTER";
+            cell.counterAxisAlignItems = "CENTER";
+            cell.primaryAxisSizingMode = "FIXED";
+            cell.counterAxisSizingMode = "FIXED";
+            cell.resize(32, 28);
+            const d = r2 * 7 + c2 - 2;
+            const n = d > 0 && d < 31 ? String(d) : "";
+            const tx = await text(n, "regular", 12, cell);
+            bindText(tx, tokens, "color/text/primary");
+            if (d === 20) {
+              cell.cornerRadius = 14;
+              bindFill(cell, tokens, "color/brand/primary");
+              bindText(tx, tokens, "color/canvas/background");
+            }
+          }
+        }
+      }
+      variants.push(figma.createComponentFromNode(outer));
+    }
+    return publishSet(page, variants, "Canvas/Input/Date Picker", {
+      purpose: "Date selection with optional calendar popup.",
+      pp: "Date picker (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-date-picker"
+    }, "canvas/input/date-picker");
+  }
+  async function buildTimePicker(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Focus"]) {
+      const outer = frame(`State=${state}`, void 0);
+      autoLayout(outer, "v", 4, 0);
+      outer.primaryAxisSizingMode = "AUTO";
+      outer.counterAxisSizingMode = "FIXED";
+      outer.resize(200, 1);
+      const label = await text("Start time", "semibold", 12, outer);
+      bindText(label, tokens, "color/text/primary");
+      const box = frame("box", outer);
+      autoLayout(box, "h", 8, { l: 12, r: 12, t: 0, b: 0 });
+      box.counterAxisSizingMode = "FIXED";
+      box.primaryAxisSizingMode = "FIXED";
+      box.counterAxisAlignItems = "CENTER";
+      box.resize(200, 32);
+      box.cornerRadius = 4;
+      bindFill(box, tokens, "color/canvas/background");
+      bindStroke(box, tokens, borderFor(state), state === "Focus" ? 2 : 1);
+      const v = await text("09:30 AM", "regular", 14, box);
+      bindText(v, tokens, "color/text/primary");
+      variants.push(figma.createComponentFromNode(outer));
+    }
+    return publishSet(page, variants, "Canvas/Input/Time Picker", {
+      purpose: "Time selection.",
+      pp: "Time picker (Modern Controls)."
+    }, "canvas/input/time-picker");
+  }
+  async function buildCanvasInputs(page, tokens) {
+    const sets = [];
+    sets.push(await buildTextInput(page, tokens));
+    sets.push(await buildTextArea(page, tokens));
+    sets.push(await buildDropdown(page, tokens));
+    sets.push(await buildComboBox(page, tokens));
+    sets.push(await buildDatePicker(page, tokens));
+    sets.push(await buildTimePicker(page, tokens));
+    sets.push(await buildToggleSet(page, tokens));
+    sets.push(await buildCheckboxSet(page, tokens));
+    sets.push(await buildRadioGroup(page, tokens));
+    sets.push(await buildSlider(page, tokens));
+    sets.push(await buildRating(page, tokens));
+    sets.push(await buildNumberInput(page, tokens));
+    return sets;
+  }
+
+  // src/libraries/canvas/buttons.ts
+  var SIZES = {
+    Small: { h: 24, pad: 8, gap: 4, font: 12 },
+    Medium: { h: 32, pad: 12, gap: 6, font: 14 },
+    Large: { h: 40, pad: 16, gap: 8, font: 16 }
+  };
+  function appearanceColors(appearance, state) {
+    if (state === "Disabled") {
+      return {
+        bg: appearance === "Primary" ? "color/canvas/surface-alt" : void 0,
+        border: appearance === "Secondary" ? "color/stroke/subtle" : void 0,
+        fg: "color/text/disabled"
+      };
+    }
+    switch (appearance) {
+      case "Primary": {
+        const bg = state === "Hover" ? "color/brand/primary-hover" : state === "Pressed" ? "color/brand/primary-pressed" : "color/brand/primary";
+        return { bg, fg: "color/canvas/background" };
+      }
+      case "Secondary": {
+        const bg = state === "Hover" ? "color/canvas/surface-alt" : "color/canvas/background";
+        return { bg, border: "color/stroke/default", fg: "color/text/primary" };
+      }
+      case "Subtle": {
+        const bg = state === "Default" ? void 0 : "color/canvas/surface-alt";
+        return { bg, fg: "color/text/primary" };
+      }
+      case "Transparent":
+      default:
+        return { fg: "color/brand/primary" };
+    }
+  }
+  async function buildButtonVariant(tokens, appearance, state, size) {
+    const s = SIZES[size];
+    const colors = appearanceColors(appearance, state);
+    const f = frame(`State=${state}, Size=${size}`, void 0);
+    autoLayout(f, "h", s.gap, { l: s.pad, r: s.pad, t: 0, b: 0 });
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.counterAxisAlignItems = "CENTER";
+    f.primaryAxisAlignItems = "CENTER";
+    f.resize(f.width, s.h);
+    f.cornerRadius = 4;
+    if (colors.bg) bindFill(f, tokens, colors.bg);
+    if (colors.border) bindStroke(f, tokens, colors.border, 1);
+    const t = await text("Button", "semibold", s.font, f);
+    bindText(t, tokens, colors.fg);
+    return figma.createComponentFromNode(f);
+  }
+  async function buildAppearanceSet(page, tokens, appearance) {
+    const variants = [];
+    for (const state of ["Default", "Hover", "Pressed", "Disabled"]) {
+      for (const size of ["Small", "Medium", "Large"]) {
+        variants.push(await buildButtonVariant(tokens, appearance, state, size));
+      }
+    }
+    return publishSet(page, variants, `Canvas/Button/${appearance}`, {
+      purpose: `${appearance} emphasis Fluent-style button.`,
+      pp: "Button (Modern Controls) \u2014 appearance variants",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-button"
+    }, `canvas/button/${appearance.toLowerCase()}`);
+  }
+  async function buildIconOnlyButtonSet(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Hover", "Pressed", "Disabled"]) {
+      for (const size of ["Small", "Medium", "Large"]) {
+        const s = SIZES[size];
+        const f = frame(`State=${state}, Size=${size}`, void 0);
+        autoLayout(f, "h", 0, 0);
+        f.primaryAxisSizingMode = "FIXED";
+        f.counterAxisSizingMode = "FIXED";
+        f.primaryAxisAlignItems = "CENTER";
+        f.counterAxisAlignItems = "CENTER";
+        f.resize(s.h, s.h);
+        f.cornerRadius = 4;
+        if (state !== "Default") bindFill(f, tokens, state === "Pressed" ? "color/canvas/surface" : "color/canvas/surface-alt");
+        bindStroke(f, tokens, "color/stroke/default", 1);
+        const glyph = figma.createRectangle();
+        glyph.resize(16, 16);
+        glyph.fills = [];
+        glyph.name = "icon";
+        bindStroke(glyph, tokens, state === "Disabled" ? "color/text/disabled" : "color/text/primary");
+        f.appendChild(glyph);
+        variants.push(figma.createComponentFromNode(f));
+      }
+    }
+    return publishSet(page, variants, "Canvas/Button/Icon Only", {
+      purpose: "Square icon button. Use with Instance Swap on the icon child.",
+      pp: "Button with only Icon property set (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-button"
+    }, "canvas/button/icon-only");
+  }
+  async function buildSplitButtonSet(page, tokens) {
+    const variants = [];
+    for (const state of ["Default", "Hover", "Disabled"]) {
+      const f = frame(`State=${state}`, void 0);
+      autoLayout(f, "h", 0, 0);
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "FIXED";
+      f.counterAxisAlignItems = "CENTER";
+      f.resize(f.width, 32);
+      const left = frame("primary", f);
+      autoLayout(left, "h", 6, { l: 12, r: 12, t: 0, b: 0 });
+      left.counterAxisSizingMode = "FIXED";
+      left.primaryAxisSizingMode = "AUTO";
+      left.counterAxisAlignItems = "CENTER";
+      left.resize(left.width, 32);
+      const colors = appearanceColors("Primary", state);
+      if (colors.bg) bindFill(left, tokens, colors.bg);
+      const txt = await text("Primary action", "semibold", 14, left);
+      bindText(txt, tokens, colors.fg);
+      const chev = frame("chev", f);
+      autoLayout(chev, "h", 0, 0);
+      chev.counterAxisSizingMode = "FIXED";
+      chev.primaryAxisSizingMode = "FIXED";
+      chev.counterAxisAlignItems = "CENTER";
+      chev.primaryAxisAlignItems = "CENTER";
+      chev.resize(32, 32);
+      if (colors.bg) bindFill(chev, tokens, state === "Hover" ? "color/brand/primary-pressed" : "color/brand/primary-hover");
+      const c2 = await text("\u25BE", "bold", 12, chev);
+      bindText(c2, tokens, colors.fg);
+      f.cornerRadius = 4;
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Button/Split Button", {
+      purpose: "Primary action plus a dropdown of related actions.",
+      pp: "Command Bar split button pattern (Modern Controls).",
+      docs: "https://react.fluentui.dev/?path=/docs/components-button-splitbutton--docs"
+    }, "canvas/button/split");
+  }
+  async function buildCanvasButtons(page, tokens) {
+    const sets = [];
+    for (const a of ["Primary", "Secondary", "Subtle", "Transparent"]) {
+      sets.push(await buildAppearanceSet(page, tokens, a));
+    }
+    sets.push(await buildIconOnlyButtonSet(page, tokens));
+    sets.push(await buildSplitButtonSet(page, tokens));
+    return sets;
+  }
+
+  // src/libraries/canvas/data.ts
+  async function galleryItem(tokens, variant) {
+    const row = frame("GalleryItem", void 0);
+    autoLayout(row, "h", 12, { l: 16, r: 16, t: 10, b: 10 });
+    row.primaryAxisSizingMode = "FIXED";
+    row.counterAxisSizingMode = "AUTO";
+    row.counterAxisAlignItems = "CENTER";
+    row.resize(360, 1);
+    if (variant === "Selected") bindFill(row, tokens, "color/canvas/surface-alt");
+    else if (variant === "Hover") bindFill(row, tokens, "color/canvas/surface");
+    const av = ellipse("avatar", 36, 36, row);
+    bindFill(av, tokens, "color/brand/primary");
+    const info = frame("info", row);
+    autoLayout(info, "v", 2, 0);
+    info.primaryAxisSizingMode = "AUTO";
+    info.counterAxisSizingMode = "AUTO";
+    info.layoutGrow = 1;
+    const title = await text("Alicia Contoso", "semibold", 14, info);
+    bindText(title, tokens, "color/text/primary");
+    const sub = await text("alicia@contoso.com \xB7 Senior Director", "regular", 12, info);
+    bindText(sub, tokens, "color/text/secondary");
+    const chev = await text("\u203A", "bold", 18, row);
+    bindText(chev, tokens, "color/text/secondary");
+    return row;
+  }
+  async function buildGalleryVertical(page, tokens) {
+    const variants = [];
+    for (const variant of ["Default", "Selected", "Hover"]) {
+      variants.push(figma.createComponentFromNode(await (async () => {
+        const f = await galleryItem(tokens, variant);
+        f.name = `Variant=${variant}`;
+        return f;
+      })()));
+    }
+    return publishSet(page, variants, "Canvas/Data/Gallery \u2014 Vertical", {
+      purpose: "Vertical gallery list item (avatar + two lines + chevron).",
+      pp: "Vertical Gallery (Modern Controls) with item template.",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-gallery"
+    }, "canvas/data/gallery-vertical");
+  }
+  async function buildGalleryHorizontal(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 12, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(720, 160);
+    bindFill(f, tokens, "color/canvas/background");
+    for (let i = 0; i < 4; i++) {
+      const card = frame(`card-${i}`, f);
+      autoLayout(card, "v", 8, 12);
+      card.primaryAxisSizingMode = "FIXED";
+      card.counterAxisSizingMode = "FIXED";
+      card.resize(160, 128);
+      card.cornerRadius = 6;
+      bindFill(card, tokens, "color/canvas/surface");
+      bindStroke(card, tokens, "color/stroke/subtle", 1);
+      const img = rect("image", 136, 72, card);
+      img.cornerRadius = 4;
+      bindFill(img, tokens, "color/canvas/surface-alt");
+      const t = await text(`Item ${i + 1}`, "semibold", 13, card);
+      bindText(t, tokens, "color/text/primary");
+    }
+    const variants = [figma.createComponentFromNode(f)];
+    return publishSet(page, variants, "Canvas/Data/Gallery \u2014 Horizontal", {
+      purpose: "Horizontal gallery of cards (e.g. images or summaries).",
+      pp: "Horizontal Gallery (Modern Controls)."
+    }, "canvas/data/gallery-horizontal");
+  }
+  async function buildGalleryFlexible(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 8, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "AUTO";
+    f.resize(520, 1);
+    bindFill(f, tokens, "color/canvas/background");
+    for (let i = 0; i < 3; i++) {
+      const row = frame(`row-${i}`, f);
+      autoLayout(row, "v", 4, 12);
+      row.primaryAxisSizingMode = "AUTO";
+      row.counterAxisSizingMode = "FIXED";
+      row.resize(488, 1);
+      row.cornerRadius = 6;
+      bindFill(row, tokens, "color/canvas/surface");
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      const t = await text(`Case CAS-${1e3 + i}`, "semibold", 13, row);
+      bindText(t, tokens, "color/text/primary");
+      const b = await text("Body text that wraps to multiple lines when the content is long. Gallery item grows with content.", "regular", 12, row);
+      b.textAutoResize = "HEIGHT";
+      b.resize(464, b.height);
+      bindText(b, tokens, "color/text/secondary");
+    }
+    const variants = [figma.createComponentFromNode(f)];
+    return publishSet(page, variants, "Canvas/Data/Gallery \u2014 Flexible Height", {
+      purpose: "Gallery rows that grow to content height.",
+      pp: "Flexible Height gallery (Modern Controls)."
+    }, "canvas/data/gallery-flexible");
+  }
+  async function buildDataTable(page, tokens) {
+    const variants = [];
+    for (const sel of ["Off", "On"]) {
+      const f = frame(`Selection=${sel}`, void 0);
+      autoLayout(f, "v", 0, 0);
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(720, 1);
+      f.cornerRadius = 6;
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const hdr = frame("header", f);
+      autoLayout(hdr, "h", 0, 0);
+      hdr.primaryAxisSizingMode = "FIXED";
+      hdr.counterAxisSizingMode = "FIXED";
+      hdr.counterAxisAlignItems = "CENTER";
+      hdr.resize(720, 40);
+      bindFill(hdr, tokens, "color/canvas/surface");
+      bindStroke(hdr, tokens, "color/stroke/subtle", 1);
+      const cols = sel === "On" ? [48, 280, 180, 130, 82] : [280, 200, 140, 100];
+      const colLabels = sel === "On" ? ["", "Name", "Status", "Owner", ""] : ["Name", "Status", "Owner", "Due"];
+      for (let c2 = 0; c2 < cols.length; c2++) {
+        const cell = frame(`hc-${c2}`, hdr);
+        autoLayout(cell, "h", 0, { l: 12, r: 12, t: 0, b: 0 });
+        cell.primaryAxisSizingMode = "FIXED";
+        cell.counterAxisSizingMode = "FIXED";
+        cell.counterAxisAlignItems = "CENTER";
+        cell.resize(cols[c2], 40);
+        if (c2 === 0 && sel === "On") {
+          const cb = rect("cb", 16, 16, cell);
+          cb.cornerRadius = 2;
+          bindStroke(cb, tokens, "color/stroke/default", 1);
+        } else if (colLabels[c2]) {
+          const t = await text(colLabels[c2], "semibold", 12, cell);
+          bindText(t, tokens, "color/text/secondary");
+        }
+      }
+      for (let r2 = 0; r2 < 5; r2++) {
+        const row = frame(`row-${r2}`, f);
+        autoLayout(row, "h", 0, 0);
+        row.primaryAxisSizingMode = "FIXED";
+        row.counterAxisSizingMode = "FIXED";
+        row.counterAxisAlignItems = "CENTER";
+        row.resize(720, 44);
+        if (r2 % 2 === 1) bindFill(row, tokens, "color/canvas/surface");
+        bindStroke(row, tokens, "color/stroke/subtle", 1);
+        const cellLabels = sel === "On" ? ["", ["Cloud migration", "Licensing renew", "DB uplift", "Teams adoption", "Power BI"][r2], ["Open", "Won", "Qualified", "Working", "Paused"][r2], ["Avery", "Morgan", "Jess", "Sam", "Avery"][r2], "\u22EF"] : [["Cloud migration", "Licensing renew", "DB uplift", "Teams adoption", "Power BI"][r2], ["Open", "Won", "Qualified", "Working", "Paused"][r2], ["Avery", "Morgan", "Jess", "Sam", "Avery"][r2], "Q2 2026"];
+        for (let c2 = 0; c2 < cols.length; c2++) {
+          const cell = frame(`c${r2}-${c2}`, row);
+          autoLayout(cell, "h", 0, { l: 12, r: 12, t: 0, b: 0 });
+          cell.primaryAxisSizingMode = "FIXED";
+          cell.counterAxisSizingMode = "FIXED";
+          cell.counterAxisAlignItems = "CENTER";
+          cell.resize(cols[c2], 44);
+          if (c2 === 0 && sel === "On") {
+            const cb = rect("cb", 16, 16, cell);
+            cb.cornerRadius = 2;
+            bindStroke(cb, tokens, "color/stroke/default", 1);
+          } else if (cellLabels[c2]) {
+            const t = await text(String(cellLabels[c2]), "regular", 13, cell);
+            bindText(t, tokens, "color/text/primary");
+          }
+        }
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Data/Data Table", {
+      purpose: "Tabular record view with header, rows, and optional selection column.",
+      pp: "Data Table (Modern Controls).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/modern-controls/modern-control-data-table"
+    }, "canvas/data/table");
+  }
+  async function buildCard(page, tokens) {
+    const variants = [];
+    for (const footer of ["None", "Actions"]) {
+      const f = frame(`Footer=${footer}`, void 0);
+      autoLayout(f, "v", 12, 16);
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(280, 1);
+      f.cornerRadius = 6;
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const hdr = await text("Card title", "semibold", 16, f);
+      bindText(hdr, tokens, "color/text/primary");
+      const body = await text("Descriptive text summarising the card contents, spanning a line or two.", "regular", 13, f);
+      body.textAutoResize = "HEIGHT";
+      body.resize(248, body.height);
+      bindText(body, tokens, "color/text/secondary");
+      if (footer === "Actions") {
+        const actions = frame("actions", f);
+        autoLayout(actions, "h", 8, 0);
+        actions.primaryAxisSizingMode = "AUTO";
+        actions.counterAxisSizingMode = "AUTO";
+        const primary = frame("primary", actions);
+        autoLayout(primary, "h", 0, { l: 12, r: 12, t: 0, b: 0 });
+        primary.primaryAxisAlignItems = "CENTER";
+        primary.counterAxisAlignItems = "CENTER";
+        primary.primaryAxisSizingMode = "AUTO";
+        primary.counterAxisSizingMode = "FIXED";
+        primary.resize(80, 32);
+        primary.cornerRadius = 4;
+        bindFill(primary, tokens, "color/brand/primary");
+        const pt = await text("Open", "semibold", 13, primary);
+        bindText(pt, tokens, "color/canvas/background");
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Data/Card", {
+      purpose: "Composable card with title, body, and optional actions.",
+      pp: "Card container (Canvas Apps)."
+    }, "canvas/data/card");
+  }
+  async function buildForm(page, tokens, edit) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 16, 20);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(420, 1);
+    f.cornerRadius = 6;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    for (const fld of ["Name", "Email", "Department"]) {
+      const row = frame(`row-${fld}`, f);
+      autoLayout(row, "v", 4, 0);
+      row.primaryAxisSizingMode = "AUTO";
+      row.counterAxisSizingMode = "FIXED";
+      row.resize(380, 1);
+      const lbl = await text(fld, "semibold", 12, row);
+      bindText(lbl, tokens, "color/text/primary");
+      if (edit) {
+        const box = frame("box", row);
+        autoLayout(box, "h", 0, 12);
+        box.primaryAxisSizingMode = "FIXED";
+        box.counterAxisSizingMode = "FIXED";
+        box.resize(380, 32);
+        box.cornerRadius = 4;
+        bindFill(box, tokens, "color/canvas/background");
+        bindStroke(box, tokens, "color/stroke/default", 1);
+        const v = await text("\u2014", "regular", 14, box);
+        bindText(v, tokens, "color/text/secondary");
+      } else {
+        const v = await text("Avery Brooks", "regular", 14, row);
+        bindText(v, tokens, "color/text/primary");
+      }
+    }
+    if (edit) {
+      const footer = frame("footer", f);
+      autoLayout(footer, "h", 8, 0);
+      footer.primaryAxisSizingMode = "AUTO";
+      footer.counterAxisSizingMode = "AUTO";
+      footer.primaryAxisAlignItems = "MAX";
+      const cancel = frame("cancel", footer);
+      autoLayout(cancel, "h", 0, { l: 12, r: 12, t: 0, b: 0 });
+      cancel.primaryAxisAlignItems = "CENTER";
+      cancel.counterAxisAlignItems = "CENTER";
+      cancel.primaryAxisSizingMode = "AUTO";
+      cancel.counterAxisSizingMode = "FIXED";
+      cancel.resize(80, 32);
+      cancel.cornerRadius = 4;
+      bindStroke(cancel, tokens, "color/stroke/default", 1);
+      const ct = await text("Cancel", "semibold", 13, cancel);
+      bindText(ct, tokens, "color/text/primary");
+      const save = frame("save", footer);
+      autoLayout(save, "h", 0, { l: 12, r: 12, t: 0, b: 0 });
+      save.primaryAxisAlignItems = "CENTER";
+      save.counterAxisAlignItems = "CENTER";
+      save.primaryAxisSizingMode = "AUTO";
+      save.counterAxisSizingMode = "FIXED";
+      save.resize(80, 32);
+      save.cornerRadius = 4;
+      bindFill(save, tokens, "color/brand/primary");
+      const st = await text("Submit", "semibold", 13, save);
+      bindText(st, tokens, "color/canvas/background");
+    }
+    const variants = [figma.createComponentFromNode(f)];
+    return publishSet(page, variants, edit ? "Canvas/Data/Form \u2014 Edit" : "Canvas/Data/Form \u2014 Display", {
+      purpose: edit ? "Editable form with fields plus submit footer." : "Read-only display of record fields.",
+      pp: edit ? "Edit form (Canvas Apps)." : "Display form (Canvas Apps).",
+      docs: "https://learn.microsoft.com/power-apps/maker/canvas-apps/controls/control-form-detail"
+    }, edit ? "canvas/data/form-edit" : "canvas/data/form-display");
+  }
+  async function buildEmptyState(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 12, 40);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.counterAxisAlignItems = "CENTER";
+    f.resize(360, 1);
+    const placeholder = rect("art", 96, 96, f);
+    placeholder.cornerRadius = 48;
+    bindFill(placeholder, tokens, "color/canvas/surface-alt");
+    const t = await text("Nothing here yet", "semibold", 18, f);
+    bindText(t, tokens, "color/text/primary");
+    const d = await text("Get started by creating your first record.", "regular", 13, f);
+    bindText(d, tokens, "color/text/secondary");
+    const cta = frame("cta", f);
+    autoLayout(cta, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+    cta.primaryAxisAlignItems = "CENTER";
+    cta.counterAxisAlignItems = "CENTER";
+    cta.primaryAxisSizingMode = "AUTO";
+    cta.counterAxisSizingMode = "AUTO";
+    cta.cornerRadius = 4;
+    bindFill(cta, tokens, "color/brand/primary");
+    const ct = await text("Create new", "semibold", 13, cta);
+    bindText(ct, tokens, "color/canvas/background");
+    const variants = [figma.createComponentFromNode(f)];
+    return publishSet(page, variants, "Canvas/Data/Empty State", {
+      purpose: "Message + call-to-action shown when a collection is empty.",
+      pp: "Empty-state pattern (Canvas Apps)."
+    }, "canvas/data/empty-state");
+  }
+  async function buildCanvasData(page, tokens) {
+    return [
+      await buildGalleryVertical(page, tokens),
+      await buildGalleryHorizontal(page, tokens),
+      await buildGalleryFlexible(page, tokens),
+      await buildDataTable(page, tokens),
+      await buildCard(page, tokens),
+      await buildForm(page, tokens, true),
+      await buildForm(page, tokens, false),
+      await buildEmptyState(page, tokens)
+    ];
+  }
+
+  // src/libraries/canvas/feedback.ts
+  async function buildProgressBar(page, tokens) {
+    const variants = [];
+    for (const kind of ["Determinate", "Indeterminate"]) {
+      for (const value of kind === "Determinate" ? [0, 40, 80, 100] : [0]) {
+        const f = frame(`Kind=${kind}${kind === "Determinate" ? `, Value=${value}` : ""}`, void 0);
+        autoLayout(f, "h", 0, 0);
+        f.primaryAxisSizingMode = "FIXED";
+        f.counterAxisSizingMode = "FIXED";
+        f.resize(240, 4);
+        f.cornerRadius = 2;
+        bindFill(f, tokens, "color/canvas/surface-alt");
+        const fill = rect("fill", kind === "Determinate" ? 240 * value / 100 : 80, 4, f);
+        fill.cornerRadius = 2;
+        bindFill(fill, tokens, "color/brand/primary");
+        variants.push(figma.createComponentFromNode(f));
+      }
+    }
+    return publishSet(page, variants, "Canvas/Feedback/Progress Bar", {
+      purpose: "Linear progress indicator.",
+      pp: "Progress bar (Modern Controls).",
+      docs: "https://react.fluentui.dev/?path=/docs/components-progressbar--docs"
+    }, "canvas/feedback/progress");
+  }
+  async function buildMessageBar(page, tokens) {
+    const variants = [];
+    const intents = [
+      ["Info", "color/status/info", "color/canvas/surface-alt"],
+      ["Success", "color/status/success", "color/canvas/surface-alt"],
+      ["Warning", "color/status/warning", "color/canvas/surface-alt"],
+      ["Danger", "color/status/danger", "color/canvas/surface-alt"]
+    ];
+    for (const [intent, icon, bg] of intents) {
+      const f = frame(`Intent=${intent}`, void 0);
+      autoLayout(f, "h", 12, 12);
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "AUTO";
+      f.counterAxisAlignItems = "CENTER";
+      f.resize(480, 1);
+      f.cornerRadius = 4;
+      bindFill(f, tokens, bg);
+      bindStroke(f, tokens, icon, 1);
+      const dot = ellipse("icon", 20, 20, f);
+      bindFill(dot, tokens, icon);
+      const t = await text(`${intent} message example text.`, "semibold", 13, f);
+      bindText(t, tokens, "color/text/primary");
+      const pad = rect("pad", 1, 1, f);
+      pad.fills = [];
+      pad.layoutGrow = 1;
+      const close = await text("\xD7", "bold", 16, f);
+      bindText(close, tokens, "color/text/secondary");
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Feedback/Message Bar", {
+      purpose: "Page-level status banner in four intents.",
+      pp: "Message bar (Modern Controls).",
+      docs: "https://react.fluentui.dev/?path=/docs/components-messagebar--docs"
+    }, "canvas/feedback/message-bar");
+  }
+  async function buildToast(page, tokens) {
+    const variants = [];
+    for (const intent of ["Info", "Success", "Warning", "Danger"]) {
+      const f = frame(`Intent=${intent}`, void 0);
+      autoLayout(f, "h", 12, { l: 12, r: 16, t: 12, b: 12 });
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "AUTO";
+      f.resize(320, 1);
+      f.cornerRadius = 4;
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const dot = ellipse("icon", 20, 20, f);
+      bindFill(dot, tokens, `color/status/${intent.toLowerCase()}`);
+      const col = frame("col", f);
+      autoLayout(col, "v", 2, 0);
+      col.primaryAxisSizingMode = "AUTO";
+      col.counterAxisSizingMode = "AUTO";
+      col.layoutGrow = 1;
+      const title = await text(`${intent} toast`, "semibold", 13, col);
+      bindText(title, tokens, "color/text/primary");
+      const body = await text("Brief explanation of what happened.", "regular", 12, col);
+      bindText(body, tokens, "color/text/secondary");
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Feedback/Toast", {
+      purpose: "Transient notification anchored to a corner of the screen.",
+      pp: "Toast notification pattern (Modern Controls)."
+    }, "canvas/feedback/toast");
+  }
+  async function buildDialog(page, tokens) {
+    const variants = [];
+    for (const size of ["Small", "Medium", "Large"]) {
+      const w = size === "Small" ? 360 : size === "Medium" ? 480 : 640;
+      const f = frame(`Size=${size}`, void 0);
+      autoLayout(f, "v", 16, 24);
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(w, 1);
+      f.cornerRadius = 8;
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const t = await text("Confirm deletion", "semibold", 20, f);
+      bindText(t, tokens, "color/text/primary");
+      const b = await text("Are you sure you want to delete this record? This action cannot be undone.", "regular", 14, f);
+      b.textAutoResize = "HEIGHT";
+      b.resize(w - 48, b.height);
+      bindText(b, tokens, "color/text/secondary");
+      const actions = frame("actions", f);
+      autoLayout(actions, "h", 8, 0);
+      actions.primaryAxisSizingMode = "AUTO";
+      actions.counterAxisSizingMode = "AUTO";
+      actions.primaryAxisAlignItems = "MAX";
+      actions.layoutGrow = 0;
+      const cancel = frame("cancel", actions);
+      autoLayout(cancel, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+      cancel.primaryAxisAlignItems = "CENTER";
+      cancel.counterAxisAlignItems = "CENTER";
+      cancel.cornerRadius = 4;
+      bindStroke(cancel, tokens, "color/stroke/default", 1);
+      const ct = await text("Cancel", "semibold", 13, cancel);
+      bindText(ct, tokens, "color/text/primary");
+      const confirm = frame("confirm", actions);
+      autoLayout(confirm, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+      confirm.primaryAxisAlignItems = "CENTER";
+      confirm.counterAxisAlignItems = "CENTER";
+      confirm.cornerRadius = 4;
+      bindFill(confirm, tokens, "color/status/danger");
+      const xt = await text("Delete", "semibold", 13, confirm);
+      bindText(xt, tokens, "color/canvas/background");
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Feedback/Dialog", {
+      purpose: "Blocking modal for confirmations and forms.",
+      pp: "Dialog (Modern Controls).",
+      docs: "https://react.fluentui.dev/?path=/docs/components-dialog--docs"
+    }, "canvas/feedback/dialog");
+  }
+  async function buildTeachingCallout(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 8, 16);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(320, 1);
+    f.cornerRadius = 6;
+    bindFill(f, tokens, "color/brand/primary");
+    const t = await text("Did you know?", "semibold", 14, f);
+    bindText(t, tokens, "color/canvas/background");
+    const b = await text("You can pin your favourite views to the top of the list for quick access.", "regular", 13, f);
+    b.textAutoResize = "HEIGHT";
+    b.resize(288, b.height);
+    bindText(b, tokens, "color/canvas/background");
+    const actions = frame("actions", f);
+    autoLayout(actions, "h", 8, 0);
+    actions.primaryAxisSizingMode = "AUTO";
+    actions.counterAxisSizingMode = "AUTO";
+    actions.primaryAxisAlignItems = "MAX";
+    const ok = await text("Got it", "semibold", 13, actions);
+    bindText(ok, tokens, "color/canvas/background");
+    const variants = [figma.createComponentFromNode(f)];
+    return publishSet(page, variants, "Canvas/Feedback/Teaching Callout", {
+      purpose: "Contextual tip overlay for onboarding.",
+      pp: "Teaching bubble pattern (Modern Controls)."
+    }, "canvas/feedback/teaching-callout");
+  }
+  async function buildSpinnerAlias(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 8, 0);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "AUTO";
+    f.counterAxisAlignItems = "CENTER";
+    const ring = ellipse("ring", 32, 32, f);
+    ring.fills = [];
+    bindStroke(ring, tokens, "color/stroke/subtle", 2);
+    const arc = ellipse("arc", 32, 32, f);
+    arc.layoutPositioning = "ABSOLUTE";
+    arc.x = 0;
+    arc.y = 0;
+    arc.fills = [];
+    bindStroke(arc, tokens, "color/brand/primary", 2);
+    arc.arcData = { startingAngle: 0, endingAngle: Math.PI * 0.7, innerRadius: 0 };
+    const t = await text("Loading\u2026", "regular", 12, f);
+    bindText(t, tokens, "color/text/secondary");
+    const variants = [figma.createComponentFromNode(f)];
+    return publishSet(page, variants, "Canvas/Feedback/Spinner", {
+      purpose: "Loading indicator with a label.",
+      pp: "Spinner (Modern Controls).",
+      docs: "https://react.fluentui.dev/?path=/docs/components-spinner--docs"
+    }, "canvas/feedback/spinner");
+  }
+  async function buildCanvasFeedback(page, tokens) {
+    return [
+      await buildSpinnerAlias(page, tokens),
+      await buildProgressBar(page, tokens),
+      await buildMessageBar(page, tokens),
+      await buildToast(page, tokens),
+      await buildDialog(page, tokens),
+      await buildTeachingCallout(page, tokens)
+    ];
+  }
+
+  // src/libraries/canvas/charts.ts
+  function chartShell(tokens, w = 320, h = 200) {
+    const f = frame("Chart", void 0);
+    autoLayout(f, "v", 8, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(w, h);
+    f.cornerRadius = 6;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    return f;
+  }
+  async function buildBar(page, tokens) {
+    const f = chartShell(tokens);
+    const t = await text("Revenue by region", "semibold", 13, f);
+    bindText(t, tokens, "color/text/primary");
+    const plot = frame("plot", f);
+    autoLayout(plot, "h", 8, 0);
+    plot.primaryAxisSizingMode = "FIXED";
+    plot.counterAxisSizingMode = "FIXED";
+    plot.counterAxisAlignItems = "MAX";
+    plot.resize(288, 140);
+    for (const pct of [0.5, 0.8, 0.3, 0.65, 0.9, 0.7, 0.45]) {
+      const bar = rect("bar", 32, 140 * pct, plot);
+      bar.cornerRadius = 2;
+      bindFill(bar, tokens, "color/brand/primary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "Canvas/Chart/Bar", {
+      purpose: "Horizontal bar chart wireframe placeholder.",
+      pp: "Power BI Bar visual / Chart control (Modern)."
+    }, "canvas/chart/bar");
+  }
+  async function buildColumn(page, tokens) {
+    const f = chartShell(tokens);
+    const t = await text("Deals per month", "semibold", 13, f);
+    bindText(t, tokens, "color/text/primary");
+    const plot = frame("plot", f);
+    autoLayout(plot, "h", 8, 0);
+    plot.primaryAxisSizingMode = "FIXED";
+    plot.counterAxisSizingMode = "FIXED";
+    plot.counterAxisAlignItems = "MAX";
+    plot.resize(288, 140);
+    for (const pct of [0.4, 0.6, 0.55, 0.75, 0.9, 0.8, 0.65, 0.85]) {
+      const bar = rect("col", 24, 140 * pct, plot);
+      bar.cornerRadius = 2;
+      bindFill(bar, tokens, "color/brand/primary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "Canvas/Chart/Column", {
+      purpose: "Vertical column chart wireframe placeholder.",
+      pp: "Power BI Column visual / Chart control (Modern)."
+    }, "canvas/chart/column");
+  }
+  async function buildLine(page, tokens) {
+    const f = chartShell(tokens);
+    const t = await text("Pipeline trend", "semibold", 13, f);
+    bindText(t, tokens, "color/text/primary");
+    const plot = frame("plot", f);
+    plot.resize(288, 140);
+    plot.layoutAlign = "STRETCH";
+    const path = figma.createVector();
+    path.strokes = [];
+    path.vectorPaths = [{
+      windingRule: "NONZERO",
+      data: "M 0 100 L 40 80 L 80 90 L 120 60 L 160 70 L 200 40 L 240 50 L 280 20"
+    }];
+    path.strokeWeight = 2;
+    bindStroke(path, tokens, "color/brand/primary", 2);
+    path.resize(288, 140);
+    plot.appendChild(path);
+    return publishSet(page, [figma.createComponentFromNode(f)], "Canvas/Chart/Line", {
+      purpose: "Line chart wireframe placeholder.",
+      pp: "Power BI Line visual / Chart control (Modern)."
+    }, "canvas/chart/line");
+  }
+  async function buildPie(page, tokens) {
+    const f = chartShell(tokens, 260, 260);
+    const t = await text("Share by source", "semibold", 13, f);
+    bindText(t, tokens, "color/text/primary");
+    const circ = ellipse("pie", 180, 180, f);
+    bindFill(circ, tokens, "color/brand/primary");
+    return publishSet(page, [figma.createComponentFromNode(f)], "Canvas/Chart/Pie", {
+      purpose: "Pie chart wireframe placeholder.",
+      pp: "Power BI Pie visual / Chart control (Modern)."
+    }, "canvas/chart/pie");
+  }
+  async function buildDonut(page, tokens) {
+    const f = chartShell(tokens, 260, 260);
+    const t = await text("Status mix", "semibold", 13, f);
+    bindText(t, tokens, "color/text/primary");
+    const circ = ellipse("donut", 180, 180, f);
+    circ.arcData = { startingAngle: 0, endingAngle: Math.PI * 2, innerRadius: 0.6 };
+    bindFill(circ, tokens, "color/brand/primary");
+    return publishSet(page, [figma.createComponentFromNode(f)], "Canvas/Chart/Donut", {
+      purpose: "Donut chart wireframe placeholder.",
+      pp: "Power BI Donut visual / Chart control (Modern)."
+    }, "canvas/chart/donut");
+  }
+  async function buildKPI(page, tokens) {
+    const variants = [];
+    for (const trend of ["Up", "Flat", "Down"]) {
+      const f = frame(`Trend=${trend}`, void 0);
+      autoLayout(f, "v", 4, 16);
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(200, 1);
+      f.cornerRadius = 6;
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const label = await text("Open deals", "semibold", 12, f);
+      bindText(label, tokens, "color/text/secondary");
+      const val = await text("142", "bold", 32, f);
+      bindText(val, tokens, "color/text/primary");
+      const delta = await text(`${trend === "Up" ? "\u25B2 +12" : trend === "Down" ? "\u25BC \u22124" : "\u25CF 0"}`, "semibold", 12, f);
+      bindText(delta, tokens, trend === "Up" ? "color/status/success" : trend === "Down" ? "color/status/danger" : "color/text/secondary");
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "Canvas/Chart/KPI", {
+      purpose: "Single-value tile with trend indicator.",
+      pp: "Power BI KPI / Canvas Card pattern."
+    }, "canvas/chart/kpi");
+  }
+  async function buildCanvasCharts(page, tokens) {
+    return [
+      await buildBar(page, tokens),
+      await buildColumn(page, tokens),
+      await buildLine(page, tokens),
+      await buildPie(page, tokens),
+      await buildDonut(page, tokens),
+      await buildKPI(page, tokens)
+    ];
+  }
+
   // src/libraries/canvas/index.ts
-  async function buildCanvasLibrary(_tokens, _page) {
-    return { components: [], sets: [] };
+  async function renderSection(page, tokens, title, sets, y) {
+    const t = await text(title, "semibold", 24, page);
+    t.x = 40;
+    t.y = y;
+    bindText(t, tokens, "color/text/primary");
+    const { height } = placeGrid(sets, { cols: 3, gap: 64, x: 40, y: y + 48 });
+    return y + 48 + height + 80;
+  }
+  async function buildCanvasLibrary(tokens, page) {
+    const header = await text("Canvas Apps \u2014 Modern Controls", "bold", 40, page);
+    header.x = 40;
+    header.y = 40;
+    bindText(header, tokens, "color/text/primary");
+    const sub = await text("Fluent 2 visual language for Canvas Apps Modern Controls. Every component is a real Figma Component Set with variants and descriptions.", "regular", 14, page);
+    sub.x = 40;
+    sub.y = 96;
+    sub.textAutoResize = "HEIGHT";
+    sub.resize(1e3, sub.height);
+    bindText(sub, tokens, "color/text/secondary");
+    let y = 160;
+    const allSets = [];
+    const structural = await buildCanvasStructural(page, tokens);
+    allSets.push(...structural);
+    y = await renderSection(page, tokens, "Structural", structural, y);
+    const nav = await buildCanvasNavigation(page, tokens);
+    allSets.push(...nav);
+    y = await renderSection(page, tokens, "Navigation", nav, y);
+    const inputs = await buildCanvasInputs(page, tokens);
+    allSets.push(...inputs);
+    y = await renderSection(page, tokens, "Input", inputs, y);
+    const buttons = await buildCanvasButtons(page, tokens);
+    allSets.push(...buttons);
+    y = await renderSection(page, tokens, "Buttons", buttons, y);
+    const data = await buildCanvasData(page, tokens);
+    allSets.push(...data);
+    y = await renderSection(page, tokens, "Data Display", data, y);
+    const feedback = await buildCanvasFeedback(page, tokens);
+    allSets.push(...feedback);
+    y = await renderSection(page, tokens, "Feedback", feedback, y);
+    const charts = await buildCanvasCharts(page, tokens);
+    allSets.push(...charts);
+    y = await renderSection(page, tokens, "Charts", charts, y);
+    return { components: [], sets: allSets };
   }
 
   // src/libraries/mda/index.ts
