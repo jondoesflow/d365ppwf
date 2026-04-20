@@ -746,7 +746,6 @@ async function commandBar(w, actions, parent) {
   row.counterAxisAlignItems = 'CENTER';
   row.counterAxisSizingMode = 'FIXED';
   row.resize(w - 24, h - 8);
-  row.layoutPositioning = 'ABSOLUTE';
   row.x = 12; row.y = 4;
 
   for (const a of actions) {
