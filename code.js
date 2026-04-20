@@ -2521,9 +2521,1683 @@
     return { components: [], sets: allSets };
   }
 
+  // src/libraries/mda/shell.ts
+  async function buildAppHeader2(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 16, { l: 12, r: 16, t: 0, b: 0 });
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.counterAxisAlignItems = "CENTER";
+    f.resize(1440, 48);
+    bindFill(f, tokens, "color/brand/primary");
+    const waffle = rect("waffle", 20, 20, f);
+    bindFill(waffle, tokens, "color/canvas/background");
+    const appName = await text("Sales Hub", "semibold", 14, f);
+    bindText(appName, tokens, "color/canvas/background");
+    const sep = rect("sep", 1, 20, f);
+    bindFill(sep, tokens, "color/brand/primary-hover");
+    const env = await text("Contoso \xB7 Production", "regular", 13, f);
+    bindText(env, tokens, "color/canvas/background");
+    env.opacity = 0.8;
+    const pad = rect("pad", 1, 1, f);
+    pad.fills = [];
+    pad.layoutGrow = 1;
+    const search = frame("search", f);
+    autoLayout(search, "h", 8, 8);
+    search.primaryAxisSizingMode = "FIXED";
+    search.counterAxisSizingMode = "FIXED";
+    search.counterAxisAlignItems = "CENTER";
+    search.resize(320, 30);
+    search.cornerRadius = 4;
+    bindFill(search, tokens, "color/brand/primary-hover");
+    const sp = await text("Search", "regular", 13, search);
+    bindText(sp, tokens, "color/canvas/background");
+    sp.opacity = 0.8;
+    for (const ic of ["?", "\u2699", "\u{1F514}"]) {
+      const t = await text(ic, "regular", 16, f);
+      bindText(t, tokens, "color/canvas/background");
+    }
+    const avatar = ellipse("avatar", 28, 28, f);
+    bindFill(avatar, tokens, "color/brand/primary-pressed");
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Shell/App Header", {
+      purpose: "Unified Interface top bar: app name, search, help, settings, notifications, user.",
+      pp: "Unified Interface app bar (Dynamics 365 / Model-driven Power Apps).",
+      docs: "https://learn.microsoft.com/power-apps/user/unified-interface"
+    }, "mda/shell/app-header");
+  }
+  async function buildSiteMap(page, tokens) {
+    const variants = [];
+    for (const state of ["Expanded", "Collapsed"]) {
+      const w = state === "Expanded" ? 240 : 56;
+      const f = frame(`State=${state}`, void 0);
+      autoLayout(f, "v", 0, 0);
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(w, 600);
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const area = frame("area", f);
+      autoLayout(area, "h", 8, { l: 12, r: 12, t: 0, b: 0 });
+      area.primaryAxisSizingMode = "FIXED";
+      area.counterAxisSizingMode = "FIXED";
+      area.counterAxisAlignItems = "CENTER";
+      area.resize(w, 48);
+      bindStroke(area, tokens, "color/stroke/subtle", 1);
+      if (state === "Expanded") {
+        const at = await text("Sales", "semibold", 14, area);
+        bindText(at, tokens, "color/text/primary");
+        const pad = rect("pad", 1, 1, area);
+        pad.fills = [];
+        pad.layoutGrow = 1;
+        const chev = await text("\u25BE", "regular", 12, area);
+        bindText(chev, tokens, "color/text/secondary");
+      }
+      if (state === "Expanded") {
+        const grp = await text("MY WORK", "semibold", 10, f);
+        bindText(grp, tokens, "color/text/secondary");
+        grp.x = 12;
+        grp.y = 60;
+      }
+      const items = ["Dashboards", "Activities", "Leads", "Opportunities", "Accounts", "Contacts", "Cases"];
+      for (let i = 0; i < items.length; i++) {
+        const row = frame(`item-${i}`, f);
+        autoLayout(row, "h", 12, { l: 12, r: 12, t: 0, b: 0 });
+        row.primaryAxisSizingMode = "FIXED";
+        row.counterAxisSizingMode = "FIXED";
+        row.counterAxisAlignItems = "CENTER";
+        row.resize(w, 36);
+        if (i === 2) bindFill(row, tokens, "color/canvas/surface-alt");
+        const ic = rect("icon", 16, 16, row);
+        bindFill(ic, tokens, i === 2 ? "color/brand/primary" : "color/text/secondary");
+        if (state === "Expanded") {
+          const lbl = await text(items[i], i === 2 ? "semibold" : "regular", 13, row);
+          bindText(lbl, tokens, i === 2 ? "color/brand/primary" : "color/text/primary");
+        }
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "MDA/Shell/Site Map", {
+      purpose: "Entity navigation sidebar with area switcher and groups.",
+      pp: "Site map (Unified Interface) \u2014 area + group + subarea.",
+      docs: "https://learn.microsoft.com/power-apps/maker/model-driven-apps/create-site-map-app"
+    }, "mda/shell/sitemap");
+  }
+  async function buildNavBar(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 12, { l: 16, r: 16, t: 0, b: 0 });
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.counterAxisAlignItems = "CENTER";
+    f.resize(1184, 40);
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const back = await text("\u2190", "bold", 16, f);
+    bindText(back, tokens, "color/text/secondary");
+    for (const [i, part] of ["Opportunities", "Cloud migration \u2014 Contoso Ltd"].entries()) {
+      const t = await text(part, i === 1 ? "semibold" : "regular", 13, f);
+      bindText(t, tokens, i === 1 ? "color/text/primary" : "color/text/secondary");
+      if (i === 0) {
+        const sep = await text("\u203A", "regular", 13, f);
+        bindText(sep, tokens, "color/text/secondary");
+      }
+    }
+    const pad = rect("pad", 1, 1, f);
+    pad.fills = [];
+    pad.layoutGrow = 1;
+    const ent = await text("Record \u25BE", "regular", 13, f);
+    bindText(ent, tokens, "color/text/secondary");
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Shell/Nav Bar", {
+      purpose: "Record breadcrumb and entity context switcher below the app header.",
+      pp: "Breadcrumb + entity switcher (Unified Interface)."
+    }, "mda/shell/nav-bar");
+  }
+  async function buildCommandBar(page, tokens) {
+    const variants = [];
+    for (const selCount of ["None", "Single", "Multi"]) {
+      const f = frame(`Selection=${selCount}`, void 0);
+      autoLayout(f, "h", 4, { l: 12, r: 12, t: 0, b: 0 });
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.counterAxisAlignItems = "CENTER";
+      f.resize(1184, 40);
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const actions = selCount === "None" ? ["+ New", "Edit", "Refresh", "Export to Excel", "Flow", "Run Report"] : selCount === "Single" ? ["+ New", "Edit", "Deactivate", "Assign", "Share", "Email a Link", "Delete"] : ["Edit", "Deactivate", "Assign", "Delete", "Merge", "Bulk edit"];
+      for (const a of actions) {
+        const btn = frame("btn", f);
+        autoLayout(btn, "h", 6, { l: 8, r: 8, t: 6, b: 6 });
+        btn.primaryAxisSizingMode = "AUTO";
+        btn.counterAxisSizingMode = "AUTO";
+        btn.counterAxisAlignItems = "CENTER";
+        btn.cornerRadius = 4;
+        const ic = rect("ic", 14, 14, btn);
+        bindFill(ic, tokens, "color/text/secondary");
+        const t = await text(a, "regular", 13, btn);
+        bindText(t, tokens, "color/text/primary");
+      }
+      const pad = rect("pad", 1, 1, f);
+      pad.fills = [];
+      pad.layoutGrow = 1;
+      const over = await text("\u22EF", "bold", 16, f);
+      bindText(over, tokens, "color/text/secondary");
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "MDA/Shell/Command Bar", {
+      purpose: "Entity-level action bar; visible actions vary by selection count.",
+      pp: "Command bar (Unified Interface).",
+      docs: "https://learn.microsoft.com/power-apps/maker/model-driven-apps/commanding-overview"
+    }, "mda/shell/command-bar");
+  }
+  async function buildMdaShell(page, tokens) {
+    return [
+      await buildAppHeader2(page, tokens),
+      await buildSiteMap(page, tokens),
+      await buildNavBar(page, tokens),
+      await buildCommandBar(page, tokens)
+    ];
+  }
+
+  // src/libraries/mda/views.ts
+  async function gridShell(tokens, name) {
+    const f = frame(name, void 0);
+    autoLayout(f, "v", 0, 0);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(880, 1);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    return f;
+  }
+  async function buildReadOnlyGrid(page, tokens) {
+    const f = await gridShell(tokens, "Default");
+    const cols = [44, 280, 150, 120, 120, 166];
+    const labels = ["", "Topic", "Customer", "Est. revenue", "Status reason", "Owner"];
+    const hdr = frame("header", f);
+    autoLayout(hdr, "h", 0, 0);
+    hdr.primaryAxisSizingMode = "FIXED";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.counterAxisAlignItems = "CENTER";
+    hdr.resize(880, 40);
+    bindFill(hdr, tokens, "color/canvas/surface");
+    bindStroke(hdr, tokens, "color/stroke/subtle", 1);
+    for (let c2 = 0; c2 < cols.length; c2++) {
+      const cell = frame(`hc-${c2}`, hdr);
+      autoLayout(cell, "h", 6, { l: 12, r: 12, t: 0, b: 0 });
+      cell.primaryAxisSizingMode = "FIXED";
+      cell.counterAxisSizingMode = "FIXED";
+      cell.counterAxisAlignItems = "CENTER";
+      cell.resize(cols[c2], 40);
+      if (c2 === 0) {
+        const cb = rect("cb", 16, 16, cell);
+        cb.cornerRadius = 2;
+        bindStroke(cb, tokens, "color/stroke/default", 1);
+      } else {
+        const t = await text(labels[c2], "semibold", 12, cell);
+        bindText(t, tokens, "color/text/secondary");
+        const arrow = await text("\u25BE", "regular", 9, cell);
+        bindText(arrow, tokens, "color/text/secondary");
+      }
+    }
+    const rows = [
+      ["", "Cloud migration", "Contoso Ltd", "$ 250,000", "In Progress", "Avery Brooks"],
+      ["", "Licensing renew \u2014 2026", "Fabrikam Inc", "$ 85,000", "Won", "Morgan Yu"],
+      ["", "Power BI rollout", "Litware", "$ 120,000", "In Progress", "Jess Rivera"],
+      ["", "Teams adoption", "Tailwind", "$ 42,000", "Open", "Sam Ngo"],
+      ["", "Data platform pilot", "Adventure Wks", "$ 65,000", "Paused", "Avery Brooks"],
+      ["", "DB consolidation", "Northwind", "$ 180,000", "Lost", "Morgan Yu"],
+      ["", "Office rollout", "Proseware", "$ 35,000", "Won", "Jess Rivera"],
+      ["", "Training pilot", "Alpine Ski", "$ 22,000", "In Progress", "Sam Ngo"],
+      ["", "Integration review", "Contoso Ltd", "$ 150,000", "Open", "Avery Brooks"],
+      ["", "Marketplace build", "Fabrikam Inc", "$ 95,000", "In Progress", "Morgan Yu"]
+    ];
+    for (let r2 = 0; r2 < rows.length; r2++) {
+      const row = frame(`row-${r2}`, f);
+      autoLayout(row, "h", 0, 0);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.counterAxisAlignItems = "CENTER";
+      row.resize(880, 44);
+      if (r2 % 2 === 1) bindFill(row, tokens, "color/canvas/surface");
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      for (let c2 = 0; c2 < cols.length; c2++) {
+        const cell = frame(`c-${r2}-${c2}`, row);
+        autoLayout(cell, "h", 0, { l: 12, r: 12, t: 0, b: 0 });
+        cell.primaryAxisSizingMode = "FIXED";
+        cell.counterAxisSizingMode = "FIXED";
+        cell.counterAxisAlignItems = "CENTER";
+        cell.resize(cols[c2], 44);
+        if (c2 === 0) {
+          const cb = rect("cb", 16, 16, cell);
+          cb.cornerRadius = 2;
+          bindStroke(cb, tokens, "color/stroke/default", 1);
+        } else if (c2 === 1) {
+          const t = await text(rows[r2][c2], "medium", 13, cell);
+          bindText(t, tokens, "color/brand/primary");
+        } else {
+          const t = await text(rows[r2][c2], "regular", 13, cell);
+          bindText(t, tokens, "color/text/primary");
+        }
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/View/Read-Only Grid", {
+      purpose: "Tabular view of records with sortable columns and selection.",
+      pp: "Read-only grid (Unified Interface).",
+      docs: "https://learn.microsoft.com/power-apps/maker/model-driven-apps/make-views-understand-managed-properties"
+    }, "mda/view/read-only-grid");
+  }
+  async function buildEditableGrid(page, tokens) {
+    const f = await gridShell(tokens, "Default");
+    const cols = [280, 160, 160, 160, 120];
+    const labels = ["Topic", "Customer", "Est. revenue", "Close date", "Probability"];
+    const hdr = frame("header", f);
+    autoLayout(hdr, "h", 0, 0);
+    hdr.primaryAxisSizingMode = "FIXED";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.counterAxisAlignItems = "CENTER";
+    hdr.resize(880, 40);
+    bindFill(hdr, tokens, "color/canvas/surface");
+    bindStroke(hdr, tokens, "color/stroke/subtle", 1);
+    for (let c2 = 0; c2 < cols.length; c2++) {
+      const cell = frame(`hc-${c2}`, hdr);
+      autoLayout(cell, "h", 0, { l: 12, r: 12, t: 0, b: 0 });
+      cell.primaryAxisSizingMode = "FIXED";
+      cell.counterAxisSizingMode = "FIXED";
+      cell.counterAxisAlignItems = "CENTER";
+      cell.resize(cols[c2], 40);
+      const t = await text(labels[c2], "semibold", 12, cell);
+      bindText(t, tokens, "color/text/secondary");
+    }
+    for (let r2 = 0; r2 < 4; r2++) {
+      const row = frame(`row-${r2}`, f);
+      autoLayout(row, "h", 4, 4);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.counterAxisAlignItems = "CENTER";
+      row.resize(880, 44);
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      for (let c2 = 0; c2 < cols.length; c2++) {
+        const cell = frame(`c-${r2}-${c2}`, row);
+        autoLayout(cell, "h", 0, { l: 8, r: 8, t: 0, b: 0 });
+        cell.primaryAxisSizingMode = "FIXED";
+        cell.counterAxisSizingMode = "FIXED";
+        cell.counterAxisAlignItems = "CENTER";
+        cell.resize(cols[c2] - 4, 36);
+        cell.cornerRadius = 3;
+        if (r2 === 1 && c2 === 2) {
+          bindFill(cell, tokens, "color/canvas/background");
+          bindStroke(cell, tokens, "color/brand/primary", 2);
+        }
+        const val = ["Pipeline", "Acct", "$ 85,000", "2026-06-30", "65%"][c2];
+        const t = await text(val, "regular", 13, cell);
+        bindText(t, tokens, "color/text/primary");
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/View/Editable Grid", {
+      purpose: "Inline-editable grid with focus highlight on active cell.",
+      pp: "Editable grid (Unified Interface).",
+      docs: "https://learn.microsoft.com/power-apps/maker/model-driven-apps/use-editable-grids"
+    }, "mda/view/editable-grid");
+  }
+  async function buildCardView(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 16, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(960, 240);
+    f.layoutWrap = "WRAP";
+    bindFill(f, tokens, "color/canvas/background");
+    for (let i = 0; i < 6; i++) {
+      const card = frame(`card-${i}`, f);
+      autoLayout(card, "v", 6, 16);
+      card.primaryAxisSizingMode = "AUTO";
+      card.counterAxisSizingMode = "FIXED";
+      card.resize(280, 1);
+      card.cornerRadius = 6;
+      bindFill(card, tokens, "color/canvas/background");
+      bindStroke(card, tokens, "color/stroke/subtle", 1);
+      const t = await text(`Case CAS-${1200 + i}`, "semibold", 14, card);
+      bindText(t, tokens, "color/text/primary");
+      const s = await text("Printer offline on Floor 3", "regular", 13, card);
+      bindText(s, tokens, "color/text/secondary");
+      const meta = await text("Contoso \xB7 High \xB7 Open", "regular", 12, card);
+      bindText(meta, tokens, "color/text/secondary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/View/Card View", {
+      purpose: "Grid of record cards \u2014 alternative to tabular view.",
+      pp: "Card form rendered as a list (Unified Interface)."
+    }, "mda/view/card-view");
+  }
+  async function buildCalendarView(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 0, 0);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(960, 520);
+    f.cornerRadius = 6;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const hdr = frame("hdr", f);
+    autoLayout(hdr, "h", 0, 0);
+    hdr.primaryAxisSizingMode = "FIXED";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.resize(960, 40);
+    bindFill(hdr, tokens, "color/canvas/surface");
+    for (const d of ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) {
+      const cell = frame("dh", hdr);
+      autoLayout(cell, "h", 0, 10);
+      cell.primaryAxisAlignItems = "CENTER";
+      cell.counterAxisAlignItems = "CENTER";
+      cell.primaryAxisSizingMode = "FIXED";
+      cell.counterAxisSizingMode = "FIXED";
+      cell.resize(960 / 7, 40);
+      const t = await text(d, "semibold", 12, cell);
+      bindText(t, tokens, "color/text/secondary");
+    }
+    for (let r2 = 0; r2 < 5; r2++) {
+      const row = frame(`row-${r2}`, f);
+      autoLayout(row, "h", 0, 0);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.resize(960, 96);
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      for (let c2 = 0; c2 < 7; c2++) {
+        const cell = frame("cell", row);
+        autoLayout(cell, "v", 4, 6);
+        cell.primaryAxisSizingMode = "FIXED";
+        cell.counterAxisSizingMode = "FIXED";
+        cell.resize(960 / 7, 96);
+        bindStroke(cell, tokens, "color/stroke/subtle", 1);
+        const d = r2 * 7 + c2 - 2;
+        if (d > 0 && d < 31) {
+          const day = await text(String(d), "regular", 11, cell);
+          bindText(day, tokens, "color/text/secondary");
+          if ((r2 + c2) % 3 === 0) {
+            const ev = rect("event", 120, 16, cell);
+            ev.cornerRadius = 3;
+            bindFill(ev, tokens, "color/brand/primary");
+          }
+        }
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/View/Calendar View", {
+      purpose: "Month grid of record events.",
+      pp: "Calendar view (Unified Interface)."
+    }, "mda/view/calendar");
+  }
+  async function buildKanban(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 16, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(1160, 560);
+    bindFill(f, tokens, "color/canvas/surface");
+    for (const col of ["Qualify", "Develop", "Propose", "Close"]) {
+      const column = frame(col, f);
+      autoLayout(column, "v", 12, 12);
+      column.primaryAxisSizingMode = "FIXED";
+      column.counterAxisSizingMode = "FIXED";
+      column.resize(260, 530);
+      column.cornerRadius = 6;
+      bindFill(column, tokens, "color/canvas/background");
+      bindStroke(column, tokens, "color/stroke/subtle", 1);
+      const h = await text(col, "semibold", 13, column);
+      bindText(h, tokens, "color/text/primary");
+      for (let i = 0; i < 3; i++) {
+        const card = frame(`card-${i}`, column);
+        autoLayout(card, "v", 4, 10);
+        card.primaryAxisSizingMode = "AUTO";
+        card.counterAxisSizingMode = "FIXED";
+        card.resize(236, 1);
+        card.cornerRadius = 4;
+        bindFill(card, tokens, "color/canvas/background");
+        bindStroke(card, tokens, "color/stroke/subtle", 1);
+        const t = await text(["Contoso uplift", "Fabrikam deal", "Litware pilot"][i], "semibold", 13, card);
+        bindText(t, tokens, "color/text/primary");
+        const m = await text("$ 120,000 \xB7 Q2", "regular", 12, card);
+        bindText(m, tokens, "color/text/secondary");
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/View/Kanban", {
+      purpose: "Board view with columns per stage, records as draggable cards.",
+      pp: "Kanban view (Unified Interface) \u2014 Opportunities and Cases.",
+      docs: "https://learn.microsoft.com/dynamics365/sales/sales-kanban-board"
+    }, "mda/view/kanban");
+  }
+  async function buildViewSelector(page, tokens) {
+    const variants = [];
+    for (const state of ["Closed", "Open"]) {
+      const f = frame(`State=${state}`, void 0);
+      autoLayout(f, "v", 4, 0);
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(320, 1);
+      const btn = frame("btn", f);
+      autoLayout(btn, "h", 6, 0);
+      btn.primaryAxisSizingMode = "AUTO";
+      btn.counterAxisSizingMode = "AUTO";
+      btn.counterAxisAlignItems = "CENTER";
+      const t = await text("My Open Opportunities", "semibold", 16, btn);
+      bindText(t, tokens, "color/text/primary");
+      const chev = await text("\u25BE", "regular", 12, btn);
+      bindText(chev, tokens, "color/text/secondary");
+      if (state === "Open") {
+        const menu = frame("menu", f);
+        autoLayout(menu, "v", 0, 8);
+        menu.primaryAxisSizingMode = "AUTO";
+        menu.counterAxisSizingMode = "FIXED";
+        menu.resize(320, 1);
+        menu.cornerRadius = 4;
+        bindFill(menu, tokens, "color/canvas/background");
+        bindStroke(menu, tokens, "color/stroke/default", 1);
+        for (const group of [["Pinned", ["My Open", "All Won"]], ["Recent", ["Q2 Forecast", "High Priority"]]]) {
+          const g = await text(group[0], "semibold", 10, menu);
+          bindText(g, tokens, "color/text/secondary");
+          for (const item of group[1]) {
+            const row = frame("row", menu);
+            autoLayout(row, "h", 0, { l: 8, r: 8, t: 6, b: 6 });
+            row.primaryAxisSizingMode = "FIXED";
+            row.counterAxisSizingMode = "AUTO";
+            row.resize(304, 1);
+            const rt = await text(item, "regular", 13, row);
+            bindText(rt, tokens, "color/text/primary");
+          }
+        }
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "MDA/View/View Selector", {
+      purpose: "Dropdown to switch between saved queries / views.",
+      pp: "View selector (Unified Interface)."
+    }, "mda/view/view-selector");
+  }
+  async function buildFilterPane(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 12, 16);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(280, 1);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const h = await text("Filter", "semibold", 14, f);
+    bindText(h, tokens, "color/text/primary");
+    for (const group of [["Owner", ["Me", "My team", "Everyone"]], ["Status", ["Open", "Won", "Lost"]]]) {
+      const gh = await text(group[0], "semibold", 12, f);
+      bindText(gh, tokens, "color/text/secondary");
+      for (const item of group[1]) {
+        const row = frame("row", f);
+        autoLayout(row, "h", 8, 0);
+        row.primaryAxisSizingMode = "AUTO";
+        row.counterAxisSizingMode = "AUTO";
+        row.counterAxisAlignItems = "CENTER";
+        const cb = rect("cb", 16, 16, row);
+        cb.cornerRadius = 2;
+        bindStroke(cb, tokens, "color/stroke/default", 1);
+        const t = await text(item, "regular", 13, row);
+        bindText(t, tokens, "color/text/primary");
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/View/Filter Pane", {
+      purpose: "Right-hand facet filters over the current view.",
+      pp: "Filter pane (Unified Interface)."
+    }, "mda/view/filter-pane");
+  }
+  async function buildChartsPane(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 16, 16);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(320, 1);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const h = await text("Opportunities by status", "semibold", 14, f);
+    bindText(h, tokens, "color/text/primary");
+    const plot = frame("plot", f);
+    autoLayout(plot, "h", 4, 0);
+    plot.primaryAxisSizingMode = "FIXED";
+    plot.counterAxisSizingMode = "FIXED";
+    plot.counterAxisAlignItems = "MAX";
+    plot.resize(288, 120);
+    for (const pct of [0.3, 0.8, 0.55, 0.72]) {
+      const b = rect("bar", 56, 120 * pct, plot);
+      b.cornerRadius = 2;
+      bindFill(b, tokens, "color/brand/primary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/View/Charts Pane", {
+      purpose: "Embedded chart tile beside a list view.",
+      pp: "Charts pane (Unified Interface)."
+    }, "mda/view/charts-pane");
+  }
+  async function buildMdaViews(page, tokens) {
+    return [
+      await buildReadOnlyGrid(page, tokens),
+      await buildEditableGrid(page, tokens),
+      await buildCardView(page, tokens),
+      await buildCalendarView(page, tokens),
+      await buildKanban(page, tokens),
+      await buildViewSelector(page, tokens),
+      await buildFilterPane(page, tokens),
+      await buildChartsPane(page, tokens)
+    ];
+  }
+
+  // src/libraries/mda/forms.ts
+  async function buildField(page, tokens, name, opts, docs, key) {
+    const variants = [];
+    const states = ["Default", "Focus", "Readonly", "Disabled"];
+    for (const st of states) {
+      const f = frame(`State=${st}`, void 0);
+      autoLayout(f, "v", 4, 0);
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(opts.width ?? 320, 1);
+      const lbl = await text(opts.label + (opts.required ? " *" : ""), "semibold", 12, f);
+      bindText(lbl, tokens, st === "Disabled" ? "color/text/disabled" : "color/text/secondary");
+      const box = frame("box", f);
+      autoLayout(box, "h", 8, { l: 10, r: 10, t: 0, b: 0 });
+      box.primaryAxisSizingMode = "FIXED";
+      box.counterAxisSizingMode = "FIXED";
+      box.counterAxisAlignItems = "CENTER";
+      box.resize(opts.width ?? 320, opts.multiline ? 72 : 32);
+      const bgKey = st === "Readonly" ? "color/canvas/surface" : st === "Disabled" ? "color/canvas/surface-alt" : "color/canvas/background";
+      bindFill(box, tokens, bgKey);
+      const borderKey = st === "Focus" ? "color/brand/primary" : "color/stroke/default";
+      if (opts.appearance === "underline") {
+        const ln = rect("underline", opts.width ?? 320, st === "Focus" ? 2 : 1, box);
+        ln.layoutPositioning = "ABSOLUTE";
+        ln.x = 0;
+        ln.y = 31;
+        bindFill(ln, tokens, borderKey);
+      } else {
+        bindStroke(box, tokens, borderKey, st === "Focus" ? 2 : 1);
+        box.cornerRadius = 4;
+      }
+      const val = await text(opts.value ?? opts.placeholder ?? "Value", "regular", 13, box);
+      bindText(val, tokens, opts.value ? st === "Disabled" ? "color/text/disabled" : "color/text/primary" : "color/text/secondary");
+      if (opts.trailingIcon) {
+        const pad = rect("pad", 1, 1, box);
+        pad.fills = [];
+        pad.layoutGrow = 1;
+        const ic = await text(opts.trailingIcon, "regular", 13, box);
+        bindText(ic, tokens, "color/text/secondary");
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, name, {
+      purpose: `${opts.label} form field.`,
+      pp: name,
+      docs
+    }, key ?? name.toLowerCase().replace(/\s+/g, "-"));
+  }
+  async function buildMdaFormFields(page, tokens) {
+    const sets = [];
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Single Line Text", { label: "Name", value: "Cloud migration", required: true, appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Multi-Line Text", { label: "Description", value: "Customer requires\u2026", multiline: true, appearance: "outline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Option Set", { label: "Status", value: "In Progress", trailingIcon: "\u25BE", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Multi-Select Option Set", { label: "Tags", value: "Cloud, ERP, Teams", trailingIcon: "\u25BE", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Yes/No", { label: "Active", value: "Yes", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Date Only", { label: "Due date", value: "04/20/2026", trailingIcon: "\u{1F4C5}", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Date and Time", { label: "Meeting", value: "04/20/2026 09:30 AM", trailingIcon: "\u{1F551}", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Number", { label: "Quantity", value: "142", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Currency", { label: "Est. revenue", value: "$ 250,000.00", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Lookup", { label: "Account", value: "Contoso Ltd", trailingIcon: "\u{1F50E}", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Customer Lookup", { label: "Customer", value: "Contoso Ltd (Account)", trailingIcon: "\u{1F50E}", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Owner", { label: "Owner", value: "Avery Brooks", trailingIcon: "\u{1F50E}", appearance: "underline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 File / Image", { label: "Attachment", value: "proposal-v2.pdf", trailingIcon: "\u{1F4CE}", appearance: "outline" }));
+    sets.push(await buildField(page, tokens, "MDA/Form/Field \u2014 Rich Text", { label: "Notes", value: "Bold + italic supported", multiline: true, appearance: "outline" }));
+    return sets;
+  }
+  async function buildFormHeader(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 12, 20);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(1184, 1);
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const titleRow = frame("title", f);
+    autoLayout(titleRow, "h", 16, 0);
+    titleRow.primaryAxisSizingMode = "AUTO";
+    titleRow.counterAxisSizingMode = "AUTO";
+    titleRow.counterAxisAlignItems = "CENTER";
+    const title = await text("Cloud migration \u2014 Contoso Ltd", "bold", 24, titleRow);
+    bindText(title, tokens, "color/text/primary");
+    const pill = frame("pill", titleRow);
+    autoLayout(pill, "h", 4, { l: 8, r: 8, t: 2, b: 2 });
+    pill.primaryAxisSizingMode = "AUTO";
+    pill.counterAxisSizingMode = "AUTO";
+    pill.cornerRadius = 4;
+    bindFill(pill, tokens, "color/canvas/surface-alt");
+    const pt = await text("Open", "semibold", 11, pill);
+    bindText(pt, tokens, "color/text/primary");
+    const row = frame("fields", f);
+    autoLayout(row, "h", 32, 0);
+    row.primaryAxisSizingMode = "FIXED";
+    row.counterAxisSizingMode = "AUTO";
+    row.resize(1144, 1);
+    for (const [label, value] of [["Est. revenue", "$ 250,000"], ["Close date", "Jun 30, 2026"], ["Probability", "65%"], ["Owner", "Avery Brooks"]]) {
+      const col = frame(`h-${label}`, row);
+      autoLayout(col, "v", 4, 0);
+      col.primaryAxisSizingMode = "AUTO";
+      col.counterAxisSizingMode = "AUTO";
+      const l = await text(label, "semibold", 11, col);
+      bindText(l, tokens, "color/text/secondary");
+      const v = await text(value, "regular", 14, col);
+      bindText(v, tokens, "color/text/primary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Form/Header", {
+      purpose: "Form header: title, status pill, and key header fields.",
+      pp: "Unified Interface form header."
+    }, "mda/form/header");
+  }
+  async function buildTabStrip(page, tokens) {
+    const variants = [];
+    for (const selected of [0, 1, 2]) {
+      const f = frame(`Selected=${selected}`, void 0);
+      autoLayout(f, "h", 0, 0);
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(1184, 42);
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      for (const [i, label] of ["Summary", "Product & Pricing", "Stakeholders", "Activities", "Related"].entries()) {
+        const tab = frame(`tab-${i}`, f);
+        autoLayout(tab, "h", 0, { l: 18, r: 18, t: 0, b: 0 });
+        tab.primaryAxisAlignItems = "CENTER";
+        tab.counterAxisAlignItems = "CENTER";
+        tab.primaryAxisSizingMode = "AUTO";
+        tab.counterAxisSizingMode = "FIXED";
+        tab.resize(tab.width, 42);
+        const t = await text(label, i === selected ? "semibold" : "regular", 13, tab);
+        bindText(t, tokens, i === selected ? "color/brand/primary" : "color/text/secondary");
+        if (i === selected) {
+          const under = rect("underline", 1, 2, tab);
+          under.layoutPositioning = "ABSOLUTE";
+          under.x = 0;
+          under.y = 40;
+          under.layoutAlign = "STRETCH";
+          bindFill(under, tokens, "color/brand/primary");
+        }
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "MDA/Form/Tab Strip", {
+      purpose: "Horizontal tabs dividing a form into sections.",
+      pp: "Form tabs (Unified Interface)."
+    }, "mda/form/tab-strip");
+  }
+  async function buildSection(page, tokens) {
+    const variants = [];
+    for (const cols of [1, 2, 3]) {
+      const f = frame(`Columns=${cols}`, void 0);
+      autoLayout(f, "v", 12, { l: 20, r: 20, t: 16, b: 20 });
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(1184, 1);
+      bindFill(f, tokens, "color/canvas/background");
+      const h = await text("Section heading", "semibold", 14, f);
+      bindText(h, tokens, "color/text/primary");
+      const body = frame("body", f);
+      autoLayout(body, "h", 24, 0);
+      body.primaryAxisSizingMode = "FIXED";
+      body.counterAxisSizingMode = "AUTO";
+      body.resize(1144, 1);
+      for (let c2 = 0; c2 < cols; c2++) {
+        const col = frame(`col-${c2}`, body);
+        autoLayout(col, "v", 12, 0);
+        col.primaryAxisSizingMode = "AUTO";
+        col.counterAxisSizingMode = "FIXED";
+        col.layoutGrow = 1;
+        col.resize((1144 - (cols - 1) * 24) / cols, 1);
+        for (let r2 = 0; r2 < 3; r2++) {
+          const row = frame(`fld-${r2}`, col);
+          autoLayout(row, "v", 4, 0);
+          row.primaryAxisSizingMode = "AUTO";
+          row.counterAxisSizingMode = "FIXED";
+          row.resize(col.width, 1);
+          const l = await text(["Name", "Status", "Owner"][r2], "semibold", 12, row);
+          bindText(l, tokens, "color/text/secondary");
+          const box = frame("box", row);
+          autoLayout(box, "h", 0, 10);
+          box.primaryAxisSizingMode = "FIXED";
+          box.counterAxisSizingMode = "FIXED";
+          box.counterAxisAlignItems = "CENTER";
+          box.resize(col.width, 32);
+          const ln = rect("under", col.width, 1, box);
+          ln.layoutPositioning = "ABSOLUTE";
+          ln.x = 0;
+          ln.y = 31;
+          bindFill(ln, tokens, "color/stroke/default");
+          const v = await text("Value", "regular", 13, box);
+          bindText(v, tokens, "color/text/primary");
+        }
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "MDA/Form/Section", {
+      purpose: "Form section with 1, 2, or 3 column layouts.",
+      pp: "Form section (Unified Interface)."
+    }, "mda/form/section");
+  }
+  async function buildMainForm(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 0, 0);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(1184, 1);
+    bindFill(f, tokens, "color/canvas/surface");
+    const hdr = frame("header", f);
+    autoLayout(hdr, "v", 12, 20);
+    hdr.primaryAxisSizingMode = "AUTO";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.resize(1184, 1);
+    bindFill(hdr, tokens, "color/canvas/background");
+    const title = await text("Cloud migration \u2014 Contoso Ltd", "bold", 24, hdr);
+    bindText(title, tokens, "color/text/primary");
+    const meta = await text("Open \xB7 $250,000 \xB7 Est. close Q2 2026 \xB7 Avery Brooks", "regular", 13, hdr);
+    bindText(meta, tokens, "color/text/secondary");
+    const tabs = frame("tabs", f);
+    autoLayout(tabs, "h", 0, 20);
+    tabs.primaryAxisSizingMode = "FIXED";
+    tabs.counterAxisSizingMode = "FIXED";
+    tabs.resize(1184, 42);
+    bindFill(tabs, tokens, "color/canvas/background");
+    bindStroke(tabs, tokens, "color/stroke/subtle", 1);
+    for (const [i, label] of ["Summary", "Activities", "Related"].entries()) {
+      const tab = await text(label, i === 0 ? "semibold" : "regular", 13, tabs);
+      bindText(tab, tokens, i === 0 ? "color/brand/primary" : "color/text/secondary");
+    }
+    const body = frame("body", f);
+    autoLayout(body, "h", 24, 24);
+    body.primaryAxisSizingMode = "FIXED";
+    body.counterAxisSizingMode = "AUTO";
+    body.resize(1184, 1);
+    for (const side of ["left", "right"]) {
+      const col = frame(side, body);
+      autoLayout(col, "v", 12, 16);
+      col.primaryAxisSizingMode = "AUTO";
+      col.counterAxisSizingMode = "FIXED";
+      col.layoutGrow = 1;
+      col.resize((1184 - 48 - 24) / 2, 1);
+      col.cornerRadius = 4;
+      bindFill(col, tokens, "color/canvas/background");
+      bindStroke(col, tokens, "color/stroke/subtle", 1);
+      const h = await text(side === "left" ? "General" : "Stakeholders", "semibold", 14, col);
+      bindText(h, tokens, "color/text/primary");
+      for (let r2 = 0; r2 < 4; r2++) {
+        const row = frame(`fld-${r2}`, col);
+        autoLayout(row, "v", 4, 0);
+        row.primaryAxisSizingMode = "AUTO";
+        row.counterAxisSizingMode = "FIXED";
+        row.resize(col.width - 32, 1);
+        const l = await text(["Name", "Customer", "Revenue", "Close"][r2], "semibold", 12, row);
+        bindText(l, tokens, "color/text/secondary");
+        const v = await text(["Cloud migration", "Contoso Ltd", "$ 250,000", "Jun 30, 2026"][r2], "regular", 13, row);
+        bindText(v, tokens, "color/text/primary");
+        const ln = rect("ln", col.width - 32, 1, row);
+        bindFill(ln, tokens, "color/stroke/subtle");
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Form/Main Form", {
+      purpose: "Full record form: header + tabs + two-column section layout.",
+      pp: "Main form (Unified Interface).",
+      docs: "https://learn.microsoft.com/power-apps/maker/model-driven-apps/form-designer-overview"
+    }, "mda/form/main-form");
+  }
+  async function buildBPF(page, tokens) {
+    const variants = [];
+    for (const active of [0, 1, 2, 3]) {
+      const f = frame(`Active=${active}`, void 0);
+      autoLayout(f, "h", 0, 0);
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "FIXED";
+      f.resize(960, 48);
+      bindFill(f, tokens, "color/canvas/background");
+      bindStroke(f, tokens, "color/stroke/subtle", 1);
+      const stages = ["Qualify", "Develop", "Propose", "Close"];
+      for (const [i, label] of stages.entries()) {
+        const stage = frame(`stage-${i}`, f);
+        autoLayout(stage, "h", 8, { l: 16, r: 24, t: 0, b: 0 });
+        stage.primaryAxisSizingMode = "FIXED";
+        stage.counterAxisSizingMode = "FIXED";
+        stage.counterAxisAlignItems = "CENTER";
+        stage.resize(240, 48);
+        if (i === active) bindFill(stage, tokens, "color/brand/primary");
+        else if (i < active) bindFill(stage, tokens, "color/canvas/surface-alt");
+        const dot = ellipse("dot", 16, 16, stage);
+        bindFill(dot, tokens, i === active ? "color/canvas/background" : i < active ? "color/status/success" : "color/stroke/default");
+        const t = await text(label, "semibold", 13, stage);
+        bindText(t, tokens, i === active ? "color/canvas/background" : "color/text/primary");
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "MDA/Form/Business Process Flow", {
+      purpose: "Horizontal stage indicator driving a guided process.",
+      pp: "Business Process Flow (Unified Interface).",
+      docs: "https://learn.microsoft.com/power-automate/business-process-flows-overview"
+    }, "mda/form/bpf");
+  }
+  async function buildQuickView(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 8, 14);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(320, 1);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/surface");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const title = await text("Contoso Ltd", "semibold", 14, f);
+    bindText(title, tokens, "color/text/primary");
+    for (const [l, v] of [["Industry", "Manufacturing"], ["Revenue", "$ 420M"], ["Primary contact", "Alicia Garcia"]]) {
+      const row = frame("row", f);
+      autoLayout(row, "v", 2, 0);
+      row.primaryAxisSizingMode = "AUTO";
+      row.counterAxisSizingMode = "AUTO";
+      const ll = await text(l, "semibold", 11, row);
+      bindText(ll, tokens, "color/text/secondary");
+      const vv = await text(v, "regular", 13, row);
+      bindText(vv, tokens, "color/text/primary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Form/Quick View Form", {
+      purpose: "Read-only inline view of a related record.",
+      pp: "Quick View form (Unified Interface)."
+    }, "mda/form/quick-view");
+  }
+  async function buildSubGrid(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 0, 0);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(720, 1);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const hdr = frame("header", f);
+    autoLayout(hdr, "h", 12, 12);
+    hdr.primaryAxisSizingMode = "FIXED";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.counterAxisAlignItems = "CENTER";
+    hdr.resize(720, 40);
+    const t = await text("Contacts (4)", "semibold", 13, hdr);
+    bindText(t, tokens, "color/text/primary");
+    const pad = rect("pad", 1, 1, hdr);
+    pad.fills = [];
+    pad.layoutGrow = 1;
+    for (const a of ["+ New", "Add existing"]) {
+      const btn = await text(a, "semibold", 12, hdr);
+      bindText(btn, tokens, "color/brand/primary");
+    }
+    const over = await text("\u22EF", "bold", 14, hdr);
+    bindText(over, tokens, "color/text/secondary");
+    for (let i = 0; i < 4; i++) {
+      const row = frame(`row-${i}`, f);
+      autoLayout(row, "h", 12, 12);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.counterAxisAlignItems = "CENTER";
+      row.resize(720, 40);
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      const av = ellipse("av", 24, 24, row);
+      bindFill(av, tokens, "color/brand/primary");
+      const n = await text(["Alicia Garcia", "Bruno Hart", "Ciara Nolan", "Davit Petrov"][i], "medium", 13, row);
+      bindText(n, tokens, "color/brand/primary");
+      const rpad = rect("rpad", 1, 1, row);
+      rpad.fills = [];
+      rpad.layoutGrow = 1;
+      const title = await text(["CIO", "IT Director", "Architect", "PM"][i], "regular", 13, row);
+      bindText(title, tokens, "color/text/secondary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Form/Sub-Grid", {
+      purpose: "Associated records grid with its own command bar.",
+      pp: "Sub-grid (Unified Interface).",
+      docs: "https://learn.microsoft.com/power-apps/maker/model-driven-apps/add-edit-subgrid-on-form"
+    }, "mda/form/sub-grid");
+  }
+  async function buildTimeline(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 0, 0);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(560, 1);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const hdr = frame("hdr", f);
+    autoLayout(hdr, "h", 12, 12);
+    hdr.primaryAxisSizingMode = "FIXED";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.counterAxisAlignItems = "CENTER";
+    hdr.resize(560, 40);
+    const h = await text("Timeline", "semibold", 13, hdr);
+    bindText(h, tokens, "color/text/primary");
+    const pad = rect("pad", 1, 1, hdr);
+    pad.fills = [];
+    pad.layoutGrow = 1;
+    const add = await text("+ New activity", "semibold", 12, hdr);
+    bindText(add, tokens, "color/brand/primary");
+    const items = [
+      ["Email", "Avery Brooks", "2h ago", "Sent proposal draft to Alicia for review."],
+      ["Phone", "Morgan Yu", "Today", "Discovery call \u2014 moved DB to Q2."],
+      ["Note", "Jess Rivera", "Yesterday", "Stakeholder map updated; added CTO as approver."],
+      ["Task", "Avery Brooks", "Mon", "Prep SoW with architecture team \u2014 due Fri."]
+    ];
+    for (const [kind, who, when, body] of items) {
+      const row = frame("item", f);
+      autoLayout(row, "h", 12, 12);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "AUTO";
+      row.resize(560, 1);
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      const av = ellipse("av", 28, 28, row);
+      bindFill(av, tokens, "color/brand/primary");
+      const col = frame("col", row);
+      autoLayout(col, "v", 4, 0);
+      col.primaryAxisSizingMode = "AUTO";
+      col.counterAxisSizingMode = "AUTO";
+      col.layoutGrow = 1;
+      const head = frame("head", col);
+      autoLayout(head, "h", 8, 0);
+      head.primaryAxisSizingMode = "AUTO";
+      head.counterAxisSizingMode = "AUTO";
+      head.counterAxisAlignItems = "CENTER";
+      const n = await text(who, "semibold", 13, head);
+      bindText(n, tokens, "color/text/primary");
+      const kindPill = frame("k", head);
+      autoLayout(kindPill, "h", 0, { l: 6, r: 6, t: 2, b: 2 });
+      kindPill.primaryAxisSizingMode = "AUTO";
+      kindPill.counterAxisSizingMode = "AUTO";
+      kindPill.cornerRadius = 3;
+      bindFill(kindPill, tokens, "color/canvas/surface-alt");
+      const kt = await text(kind, "semibold", 10, kindPill);
+      bindText(kt, tokens, "color/text/secondary");
+      const w = await text(when, "regular", 11, head);
+      bindText(w, tokens, "color/text/secondary");
+      const b = await text(body, "regular", 13, col);
+      b.layoutAlign = "STRETCH";
+      bindText(b, tokens, "color/text/secondary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Form/Timeline", {
+      purpose: "Chronological feed of activities (emails, tasks, notes, calls).",
+      pp: "Timeline control (Unified Interface).",
+      docs: "https://learn.microsoft.com/power-apps/maker/model-driven-apps/set-up-timeline-control"
+    }, "mda/form/timeline");
+  }
+  async function buildRelatedMenu(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 0, 4);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(240, 1);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/default", 1);
+    for (const group of [["Common", ["Activities", "Notes", "Audit History"]], ["Related", ["Contacts", "Orders", "Quotes", "Cases"]]]) {
+      const g = await text(group[0], "semibold", 10, f);
+      g.x = 12;
+      g.y = 0;
+      bindText(g, tokens, "color/text/secondary");
+      for (const item of group[1]) {
+        const row = frame("r", f);
+        autoLayout(row, "h", 12, { l: 12, r: 12, t: 6, b: 6 });
+        row.primaryAxisSizingMode = "FIXED";
+        row.counterAxisSizingMode = "AUTO";
+        row.resize(240, 1);
+        const ic = rect("ic", 14, 14, row);
+        bindFill(ic, tokens, "color/text/secondary");
+        const t = await text(item, "regular", 13, row);
+        bindText(t, tokens, "color/text/primary");
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Form/Related Menu", {
+      purpose: "Menu of related entities/records accessible from the form.",
+      pp: "Related tab / menu (Unified Interface)."
+    }, "mda/form/related-menu");
+  }
+  async function buildMdaForms(page, tokens) {
+    const sets = [];
+    sets.push(await buildMainForm(page, tokens));
+    sets.push(await buildFormHeader(page, tokens));
+    sets.push(await buildTabStrip(page, tokens));
+    sets.push(await buildSection(page, tokens));
+    sets.push(...await buildMdaFormFields(page, tokens));
+    sets.push(await buildBPF(page, tokens));
+    sets.push(await buildQuickView(page, tokens));
+    sets.push(await buildSubGrid(page, tokens));
+    sets.push(await buildTimeline(page, tokens));
+    sets.push(await buildRelatedMenu(page, tokens));
+    return sets;
+  }
+
+  // src/libraries/mda/dialogs.ts
+  async function dialogShell(tokens, w, title) {
+    const f = frame(title, void 0);
+    autoLayout(f, "v", 0, 0);
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(w, 1);
+    f.cornerRadius = 6;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    return f;
+  }
+  async function buildQuickCreate(page, tokens) {
+    const f = await dialogShell(tokens, 420, "Default");
+    const hdr = frame("header", f);
+    autoLayout(hdr, "h", 12, { l: 16, r: 16, t: 0, b: 0 });
+    hdr.primaryAxisSizingMode = "FIXED";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.counterAxisAlignItems = "CENTER";
+    hdr.resize(420, 48);
+    bindStroke(hdr, tokens, "color/stroke/subtle", 1);
+    const t = await text("Quick Create \xB7 Lead", "semibold", 14, hdr);
+    bindText(t, tokens, "color/text/primary");
+    const pad = rect("p", 1, 1, hdr);
+    pad.fills = [];
+    pad.layoutGrow = 1;
+    const x = await text("\xD7", "bold", 16, hdr);
+    bindText(x, tokens, "color/text/secondary");
+    const body = frame("body", f);
+    autoLayout(body, "v", 12, 16);
+    body.primaryAxisSizingMode = "AUTO";
+    body.counterAxisSizingMode = "FIXED";
+    body.resize(420, 1);
+    for (const label of ["Topic *", "First name *", "Last name *", "Company", "Rating"]) {
+      const row = frame(`r-${label}`, body);
+      autoLayout(row, "v", 4, 0);
+      row.primaryAxisSizingMode = "AUTO";
+      row.counterAxisSizingMode = "FIXED";
+      row.resize(388, 1);
+      const l = await text(label, "semibold", 12, row);
+      bindText(l, tokens, "color/text/secondary");
+      const box = frame("box", row);
+      autoLayout(box, "h", 0, 10);
+      box.primaryAxisSizingMode = "FIXED";
+      box.counterAxisSizingMode = "FIXED";
+      box.resize(388, 32);
+      box.cornerRadius = 4;
+      bindFill(box, tokens, "color/canvas/background");
+      bindStroke(box, tokens, "color/stroke/default", 1);
+      const v = await text("\u2014", "regular", 13, box);
+      bindText(v, tokens, "color/text/secondary");
+    }
+    const footer = frame("footer", f);
+    autoLayout(footer, "h", 8, 16);
+    footer.primaryAxisSizingMode = "FIXED";
+    footer.counterAxisSizingMode = "FIXED";
+    footer.counterAxisAlignItems = "CENTER";
+    footer.primaryAxisAlignItems = "MAX";
+    footer.resize(420, 56);
+    bindStroke(footer, tokens, "color/stroke/subtle", 1);
+    for (const [kind, label] of [["secondary", "Cancel"], ["secondary", "Save & Close"], ["primary", "Save"]]) {
+      const btn = frame("btn", footer);
+      autoLayout(btn, "h", 0, { l: 12, r: 12, t: 8, b: 8 });
+      btn.primaryAxisAlignItems = "CENTER";
+      btn.counterAxisAlignItems = "CENTER";
+      btn.primaryAxisSizingMode = "AUTO";
+      btn.counterAxisSizingMode = "AUTO";
+      btn.cornerRadius = 4;
+      if (kind === "primary") bindFill(btn, tokens, "color/brand/primary");
+      else bindStroke(btn, tokens, "color/stroke/default", 1);
+      const t2 = await text(label, "semibold", 13, btn);
+      bindText(t2, tokens, kind === "primary" ? "color/canvas/background" : "color/text/primary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dialog/Quick Create", {
+      purpose: "Fast record creation flyout with a subset of Main form fields.",
+      pp: "Quick Create form (Unified Interface).",
+      docs: "https://learn.microsoft.com/power-apps/maker/model-driven-apps/create-edit-quick-view-forms"
+    }, "mda/dialog/quick-create");
+  }
+  async function buildConfirm(page, tokens) {
+    const f = await dialogShell(tokens, 440, "Default");
+    const body = frame("body", f);
+    autoLayout(body, "v", 12, 24);
+    body.primaryAxisSizingMode = "AUTO";
+    body.counterAxisSizingMode = "FIXED";
+    body.resize(440, 1);
+    const t = await text("Deactivate opportunity?", "semibold", 18, body);
+    bindText(t, tokens, "color/text/primary");
+    const b = await text("This will move the record to the Inactive state. You can reactivate it later.", "regular", 13, body);
+    b.textAutoResize = "HEIGHT";
+    b.resize(392, b.height);
+    bindText(b, tokens, "color/text/secondary");
+    const footer = frame("footer", f);
+    autoLayout(footer, "h", 8, 16);
+    footer.primaryAxisSizingMode = "FIXED";
+    footer.counterAxisSizingMode = "FIXED";
+    footer.primaryAxisAlignItems = "MAX";
+    footer.resize(440, 60);
+    bindStroke(footer, tokens, "color/stroke/subtle", 1);
+    for (const [kind, label] of [["secondary", "Cancel"], ["primary", "Deactivate"]]) {
+      const btn = frame("b", footer);
+      autoLayout(btn, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+      btn.primaryAxisAlignItems = "CENTER";
+      btn.counterAxisAlignItems = "CENTER";
+      btn.primaryAxisSizingMode = "AUTO";
+      btn.counterAxisSizingMode = "AUTO";
+      btn.cornerRadius = 4;
+      if (kind === "primary") bindFill(btn, tokens, "color/brand/primary");
+      else bindStroke(btn, tokens, "color/stroke/default", 1);
+      const t2 = await text(label, "semibold", 13, btn);
+      bindText(t2, tokens, kind === "primary" ? "color/canvas/background" : "color/text/primary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dialog/Confirm", {
+      purpose: "Two-button confirmation dialog for reversible actions.",
+      pp: "Confirm dialog (Unified Interface)."
+    }, "mda/dialog/confirm");
+  }
+  async function buildAlert(page, tokens) {
+    const f = await dialogShell(tokens, 400, "Default");
+    const body = frame("body", f);
+    autoLayout(body, "h", 12, 20);
+    body.primaryAxisSizingMode = "FIXED";
+    body.counterAxisSizingMode = "AUTO";
+    body.resize(400, 1);
+    const icon = ellipse("ic", 32, 32, body);
+    bindFill(icon, tokens, "color/status/warning");
+    const col = frame("col", body);
+    autoLayout(col, "v", 6, 0);
+    col.primaryAxisSizingMode = "AUTO";
+    col.counterAxisSizingMode = "AUTO";
+    col.layoutGrow = 1;
+    const t = await text("Could not save record", "semibold", 15, col);
+    bindText(t, tokens, "color/text/primary");
+    const m = await text("The server returned a 500. Try again later.", "regular", 13, col);
+    bindText(m, tokens, "color/text/secondary");
+    const footer = frame("footer", f);
+    autoLayout(footer, "h", 0, { l: 16, r: 16, t: 0, b: 16 });
+    footer.primaryAxisSizingMode = "FIXED";
+    footer.counterAxisSizingMode = "AUTO";
+    footer.primaryAxisAlignItems = "MAX";
+    footer.resize(400, 1);
+    const btn = frame("b", footer);
+    autoLayout(btn, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+    btn.primaryAxisSizingMode = "AUTO";
+    btn.counterAxisSizingMode = "AUTO";
+    btn.cornerRadius = 4;
+    bindFill(btn, tokens, "color/brand/primary");
+    const bt = await text("OK", "semibold", 13, btn);
+    bindText(bt, tokens, "color/canvas/background");
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dialog/Alert", {
+      purpose: "Single-button dismissal dialog for informational events.",
+      pp: "Alert dialog (Unified Interface)."
+    }, "mda/dialog/alert");
+  }
+  async function buildCustom(page, tokens) {
+    const variants = [];
+    for (const size of ["Small", "Medium", "Large", "Full"]) {
+      const w = size === "Small" ? 400 : size === "Medium" ? 560 : size === "Large" ? 800 : 1200;
+      const f = await dialogShell(tokens, w, `Size=${size}`);
+      const hdr = frame("header", f);
+      autoLayout(hdr, "h", 12, 16);
+      hdr.primaryAxisSizingMode = "FIXED";
+      hdr.counterAxisSizingMode = "FIXED";
+      hdr.counterAxisAlignItems = "CENTER";
+      hdr.resize(w, 48);
+      bindStroke(hdr, tokens, "color/stroke/subtle", 1);
+      const t = await text("Custom dialog", "semibold", 14, hdr);
+      bindText(t, tokens, "color/text/primary");
+      const pad = rect("p", 1, 1, hdr);
+      pad.fills = [];
+      pad.layoutGrow = 1;
+      const x = await text("\xD7", "bold", 16, hdr);
+      bindText(x, tokens, "color/text/secondary");
+      const body = rect("body", w, 320, f);
+      body.fills = [];
+      const footer = frame("footer", f);
+      autoLayout(footer, "h", 8, 16);
+      footer.primaryAxisSizingMode = "FIXED";
+      footer.counterAxisSizingMode = "FIXED";
+      footer.primaryAxisAlignItems = "MAX";
+      footer.resize(w, 56);
+      bindStroke(footer, tokens, "color/stroke/subtle", 1);
+      for (const [kind, label] of [["secondary", "Cancel"], ["primary", "Done"]]) {
+        const btn = frame("b", footer);
+        autoLayout(btn, "h", 0, { l: 14, r: 14, t: 8, b: 8 });
+        btn.primaryAxisSizingMode = "AUTO";
+        btn.counterAxisSizingMode = "AUTO";
+        btn.cornerRadius = 4;
+        if (kind === "primary") bindFill(btn, tokens, "color/brand/primary");
+        else bindStroke(btn, tokens, "color/stroke/default", 1);
+        const bt = await text(label, "semibold", 13, btn);
+        bindText(bt, tokens, kind === "primary" ? "color/canvas/background" : "color/text/primary");
+      }
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "MDA/Dialog/Custom", {
+      purpose: "Blank dialog frame at four sizes for custom content.",
+      pp: "Custom dialog (Unified Interface)."
+    }, "mda/dialog/custom");
+  }
+  async function buildSidePanel(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 0, 0);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(420, 720);
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/default", 1);
+    const hdr = frame("header", f);
+    autoLayout(hdr, "h", 12, 16);
+    hdr.primaryAxisSizingMode = "FIXED";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.counterAxisAlignItems = "CENTER";
+    hdr.resize(420, 56);
+    bindStroke(hdr, tokens, "color/stroke/subtle", 1);
+    const t = await text("Details", "semibold", 16, hdr);
+    bindText(t, tokens, "color/text/primary");
+    const pad = rect("p", 1, 1, hdr);
+    pad.fills = [];
+    pad.layoutGrow = 1;
+    const x = await text("\xD7", "bold", 18, hdr);
+    bindText(x, tokens, "color/text/secondary");
+    const body = rect("body", 420, 664, f);
+    body.fills = [];
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Panel/Side Panel", {
+      purpose: "Right-anchored panel for details / context.",
+      pp: "Side panel (Unified Interface)."
+    }, "mda/panel/side-panel");
+  }
+  async function buildInspector(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 12, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(360, 720);
+    bindFill(f, tokens, "color/canvas/surface");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const h = await text("Inspector", "semibold", 14, f);
+    bindText(h, tokens, "color/text/primary");
+    for (const [l, v] of [["ID", "OPP-1287"], ["Created", "2026-04-12 09:30 AM"], ["Modified", "2026-04-20 10:02 AM"], ["Owner", "Avery Brooks"], ["Process", "Opportunity Sales Process"]]) {
+      const row = frame("r", f);
+      autoLayout(row, "h", 8, 0);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "AUTO";
+      row.resize(328, 1);
+      const ll = await text(l, "semibold", 11, row);
+      bindText(ll, tokens, "color/text/secondary");
+      const pad = rect("p", 1, 1, row);
+      pad.fills = [];
+      pad.layoutGrow = 1;
+      const vv = await text(v, "regular", 12, row);
+      bindText(vv, tokens, "color/text/primary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Panel/Inspector", {
+      purpose: "Right-hand details pane showing record metadata.",
+      pp: "Inspector panel (Unified Interface)."
+    }, "mda/panel/inspector");
+  }
+  async function buildMdaDialogs(page, tokens) {
+    return [
+      await buildQuickCreate(page, tokens),
+      await buildConfirm(page, tokens),
+      await buildAlert(page, tokens),
+      await buildCustom(page, tokens),
+      await buildSidePanel(page, tokens),
+      await buildInspector(page, tokens)
+    ];
+  }
+
+  // src/libraries/mda/dashboards.ts
+  async function tile(tokens, w, h, title, inner) {
+    const f = frame(title, void 0);
+    autoLayout(f, "v", 8, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(w, h);
+    f.cornerRadius = 6;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const t = await text(title, "semibold", 13, f);
+    bindText(t, tokens, "color/text/secondary");
+    await inner(f);
+    return f;
+  }
+  async function buildKpiTile(page, tokens) {
+    const variants = [];
+    for (const trend of ["Up", "Flat", "Down"]) {
+      const f = await tile(tokens, 220, 120, `Trend=${trend}`, async (f2) => {
+        const val = await text("$ 1.2M", "bold", 28, f2);
+        bindText(val, tokens, "color/text/primary");
+        const delta = await text(trend === "Up" ? "\u25B2 +8.4%" : trend === "Down" ? "\u25BC \u22122.1%" : "\u25CF 0", "semibold", 12, f2);
+        bindText(delta, tokens, trend === "Up" ? "color/status/success" : trend === "Down" ? "color/status/danger" : "color/text/secondary");
+      });
+      f.name = `Trend=${trend}`;
+      variants.push(figma.createComponentFromNode(f));
+    }
+    return publishSet(page, variants, "MDA/Dashboard/Tile \u2014 KPI", {
+      purpose: "Single metric tile with value and trend.",
+      pp: "Dashboard KPI tile (Unified Interface)."
+    }, "mda/dashboard/tile-kpi");
+  }
+  async function buildChartTile(page, tokens) {
+    const f = await tile(tokens, 380, 240, "Default", async (f2) => {
+      const plot = frame("plot", f2);
+      autoLayout(plot, "h", 4, 0);
+      plot.primaryAxisSizingMode = "FIXED";
+      plot.counterAxisSizingMode = "FIXED";
+      plot.counterAxisAlignItems = "MAX";
+      plot.resize(348, 176);
+      for (const pct of [0.3, 0.6, 0.4, 0.75, 0.9, 0.55, 0.8, 0.65]) {
+        const bar = rect("b", 36, 176 * pct, plot);
+        bar.cornerRadius = 2;
+        bindFill(bar, tokens, "color/brand/primary");
+      }
+    });
+    f.name = "Default";
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dashboard/Tile \u2014 Chart", {
+      purpose: "Embedded chart on a dashboard.",
+      pp: "Dashboard chart tile (Unified Interface)."
+    }, "mda/dashboard/tile-chart");
+  }
+  async function buildListTile(page, tokens) {
+    const f = await tile(tokens, 380, 240, "Default", async (f2) => {
+      for (let i = 0; i < 5; i++) {
+        const row = frame(`r-${i}`, f2);
+        autoLayout(row, "h", 8, 0);
+        row.primaryAxisSizingMode = "FIXED";
+        row.counterAxisSizingMode = "AUTO";
+        row.counterAxisAlignItems = "CENTER";
+        row.resize(348, 1);
+        bindStroke(row, tokens, "color/stroke/subtle", 1);
+        const n = await text(`Case CAS-${1200 + i}`, "medium", 13, row);
+        bindText(n, tokens, "color/brand/primary");
+        const pad = rect("p", 1, 1, row);
+        pad.fills = [];
+        pad.layoutGrow = 1;
+        const w = await text(["2h", "Today", "Mon", "Tue", "Wed"][i], "regular", 11, row);
+        bindText(w, tokens, "color/text/secondary");
+      }
+    });
+    f.name = "Default";
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dashboard/Tile \u2014 List", {
+      purpose: "List tile showing N recent records.",
+      pp: "Dashboard list tile (Unified Interface)."
+    }, "mda/dashboard/tile-list");
+  }
+  async function buildLayout2x2(page, tokens) {
+    const f = frame("2x2", void 0);
+    autoLayout(f, "v", 16, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(920, 520);
+    bindFill(f, tokens, "color/canvas/surface");
+    for (let r2 = 0; r2 < 2; r2++) {
+      const row = frame(`row-${r2}`, f);
+      autoLayout(row, "h", 16, 0);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.resize(888, 240);
+      for (let c2 = 0; c2 < 2; c2++) {
+        const t = rect("tile", 436, 240, row);
+        t.cornerRadius = 6;
+        bindFill(t, tokens, "color/canvas/background");
+        bindStroke(t, tokens, "color/stroke/subtle", 1);
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dashboard/Layout \u2014 2x2", {
+      purpose: "Dashboard grid with four equal tiles.",
+      pp: "2x2 dashboard layout (Unified Interface)."
+    }, "mda/dashboard/layout-2x2");
+  }
+  async function buildLayout3x2(page, tokens) {
+    const f = frame("3x2", void 0);
+    autoLayout(f, "v", 16, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(1180, 520);
+    bindFill(f, tokens, "color/canvas/surface");
+    for (let r2 = 0; r2 < 2; r2++) {
+      const row = frame(`row-${r2}`, f);
+      autoLayout(row, "h", 16, 0);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.resize(1148, 240);
+      for (let c2 = 0; c2 < 3; c2++) {
+        const t = rect("tile", 372, 240, row);
+        t.cornerRadius = 6;
+        bindFill(t, tokens, "color/canvas/background");
+        bindStroke(t, tokens, "color/stroke/subtle", 1);
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dashboard/Layout \u2014 3x2", {
+      purpose: "Dashboard grid with six equal tiles.",
+      pp: "3x2 dashboard layout (Unified Interface)."
+    }, "mda/dashboard/layout-3x2");
+  }
+  async function buildLayoutFocused(page, tokens) {
+    const f = frame("Focused", void 0);
+    autoLayout(f, "h", 16, 16);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(1180, 520);
+    bindFill(f, tokens, "color/canvas/surface");
+    const leftCol = frame("left", f);
+    autoLayout(leftCol, "v", 16, 0);
+    leftCol.primaryAxisSizingMode = "FIXED";
+    leftCol.counterAxisSizingMode = "FIXED";
+    leftCol.resize(540, 488);
+    for (let r2 = 0; r2 < 2; r2++) {
+      const row = frame(`row-${r2}`, leftCol);
+      autoLayout(row, "h", 16, 0);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.resize(540, 236);
+      for (let c2 = 0; c2 < 2; c2++) {
+        const t = rect("tile", 262, 236, row);
+        t.cornerRadius = 6;
+        bindFill(t, tokens, "color/canvas/background");
+        bindStroke(t, tokens, "color/stroke/subtle", 1);
+      }
+    }
+    const list = rect("focused-list", 592, 488, f);
+    list.cornerRadius = 6;
+    bindFill(list, tokens, "color/canvas/background");
+    bindStroke(list, tokens, "color/stroke/subtle", 1);
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Dashboard/Layout \u2014 Focused", {
+      purpose: '4 KPI tiles + a dominant list tile \u2014 "focused view" pattern.',
+      pp: "Focused dashboard layout (Unified Interface)."
+    }, "mda/dashboard/layout-focused");
+  }
+  async function buildMdaDashboards(page, tokens) {
+    return [
+      await buildLayout2x2(page, tokens),
+      await buildLayout3x2(page, tokens),
+      await buildLayoutFocused(page, tokens),
+      await buildKpiTile(page, tokens),
+      await buildChartTile(page, tokens),
+      await buildListTile(page, tokens)
+    ];
+  }
+
+  // src/libraries/mda/admin.ts
+  async function buildSettingsPage(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "h", 0, 0);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(1180, 600);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const nav = frame("nav", f);
+    autoLayout(nav, "v", 4, 16);
+    nav.primaryAxisSizingMode = "FIXED";
+    nav.counterAxisSizingMode = "FIXED";
+    nav.resize(260, 600);
+    bindFill(nav, tokens, "color/canvas/surface");
+    for (const [i, label] of ["Overview", "Environment", "Users", "Security roles", "Teams", "Auditing", "Integrations"].entries()) {
+      const row = frame("r", nav);
+      autoLayout(row, "h", 10, { l: 12, r: 12, t: 8, b: 8 });
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "AUTO";
+      row.resize(228, 1);
+      row.cornerRadius = 3;
+      if (i === 3) bindFill(row, tokens, "color/canvas/surface-alt");
+      const t2 = await text(label, i === 3 ? "semibold" : "regular", 13, row);
+      bindText(t2, tokens, i === 3 ? "color/brand/primary" : "color/text/primary");
+    }
+    const body = frame("body", f);
+    autoLayout(body, "v", 16, 24);
+    body.primaryAxisSizingMode = "FIXED";
+    body.counterAxisSizingMode = "FIXED";
+    body.resize(920, 600);
+    const t = await text("Security roles", "bold", 24, body);
+    bindText(t, tokens, "color/text/primary");
+    const s = await text("Manage roles and the privileges they grant to users.", "regular", 13, body);
+    bindText(s, tokens, "color/text/secondary");
+    for (let i = 0; i < 4; i++) {
+      const row = frame(`r-${i}`, body);
+      autoLayout(row, "h", 12, { l: 16, r: 16, t: 12, b: 12 });
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "AUTO";
+      row.counterAxisAlignItems = "CENTER";
+      row.resize(872, 1);
+      row.cornerRadius = 4;
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      const nm = await text(["System Administrator", "Salesperson", "Customer Service Representative", "Marketing Manager"][i], "semibold", 13, row);
+      bindText(nm, tokens, "color/text/primary");
+      const pad = rect("p", 1, 1, row);
+      pad.fills = [];
+      pad.layoutGrow = 1;
+      const users = await text(`${["128", "84", "42", "6"][i]} users`, "regular", 12, row);
+      bindText(users, tokens, "color/text/secondary");
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Admin/Settings Page", {
+      purpose: "Typical admin settings shell with left nav and content list.",
+      pp: "Power Platform admin center \u2014 entity/settings layout.",
+      docs: "https://learn.microsoft.com/power-platform/admin/admin-documentation"
+    }, "mda/admin/settings-page");
+  }
+  async function buildSecurityMatrix(page, tokens) {
+    const f = frame("Default", void 0);
+    autoLayout(f, "v", 0, 0);
+    f.primaryAxisSizingMode = "FIXED";
+    f.counterAxisSizingMode = "FIXED";
+    f.resize(900, 360);
+    f.cornerRadius = 4;
+    bindFill(f, tokens, "color/canvas/background");
+    bindStroke(f, tokens, "color/stroke/subtle", 1);
+    const privileges = ["Create", "Read", "Write", "Delete", "Append"];
+    const entities = ["Account", "Contact", "Lead", "Opportunity", "Case"];
+    const hdr = frame("header", f);
+    autoLayout(hdr, "h", 0, 0);
+    hdr.primaryAxisSizingMode = "FIXED";
+    hdr.counterAxisSizingMode = "FIXED";
+    hdr.resize(900, 40);
+    bindFill(hdr, tokens, "color/canvas/surface");
+    const head0 = frame("h0", hdr);
+    autoLayout(head0, "h", 0, { l: 16, r: 16, t: 0, b: 0 });
+    head0.primaryAxisSizingMode = "FIXED";
+    head0.counterAxisSizingMode = "FIXED";
+    head0.counterAxisAlignItems = "CENTER";
+    head0.resize(200, 40);
+    const e = await text("Entity", "semibold", 12, head0);
+    bindText(e, tokens, "color/text/secondary");
+    for (const p2 of privileges) {
+      const cell = frame("hc", hdr);
+      autoLayout(cell, "h", 0, 0);
+      cell.primaryAxisAlignItems = "CENTER";
+      cell.counterAxisAlignItems = "CENTER";
+      cell.primaryAxisSizingMode = "FIXED";
+      cell.counterAxisSizingMode = "FIXED";
+      cell.resize(140, 40);
+      const t = await text(p2, "semibold", 12, cell);
+      bindText(t, tokens, "color/text/secondary");
+    }
+    for (const [r2, entity] of entities.entries()) {
+      const row = frame(`r-${r2}`, f);
+      autoLayout(row, "h", 0, 0);
+      row.primaryAxisSizingMode = "FIXED";
+      row.counterAxisSizingMode = "FIXED";
+      row.resize(900, 60);
+      bindStroke(row, tokens, "color/stroke/subtle", 1);
+      const labelCell = frame("lc", row);
+      autoLayout(labelCell, "h", 0, { l: 16, r: 16, t: 0, b: 0 });
+      labelCell.primaryAxisSizingMode = "FIXED";
+      labelCell.counterAxisSizingMode = "FIXED";
+      labelCell.counterAxisAlignItems = "CENTER";
+      labelCell.resize(200, 60);
+      const lt = await text(entity, "medium", 13, labelCell);
+      bindText(lt, tokens, "color/text/primary");
+      for (let c2 = 0; c2 < privileges.length; c2++) {
+        const cell = frame("cc", row);
+        autoLayout(cell, "h", 0, 0);
+        cell.primaryAxisAlignItems = "CENTER";
+        cell.counterAxisAlignItems = "CENTER";
+        cell.primaryAxisSizingMode = "FIXED";
+        cell.counterAxisSizingMode = "FIXED";
+        cell.resize(140, 60);
+        const ring = figma.createEllipse();
+        ring.resize(22, 22);
+        ring.fills = [];
+        bindStroke(ring, tokens, "color/stroke/default", 2);
+        cell.appendChild(ring);
+        const level = (c2 + r2) % 4;
+        if (level > 0) {
+          const filled = figma.createEllipse();
+          filled.resize(22, 22);
+          filled.fills = [];
+          filled.arcData = { startingAngle: 0, endingAngle: Math.PI * 2 * level / 4, innerRadius: 0.6 };
+          bindFill(filled, tokens, level === 3 ? "color/status/success" : "color/brand/primary");
+          cell.appendChild(filled);
+        }
+      }
+    }
+    return publishSet(page, [figma.createComponentFromNode(f)], "MDA/Admin/Security Role Matrix", {
+      purpose: "Entity \xD7 privilege matrix showing access levels per combination.",
+      pp: "Security role editor (Power Platform admin center).",
+      docs: "https://learn.microsoft.com/power-platform/admin/security-roles-privileges"
+    }, "mda/admin/security-matrix");
+  }
+  async function buildMdaAdmin(page, tokens) {
+    return [
+      await buildSettingsPage(page, tokens),
+      await buildSecurityMatrix(page, tokens)
+    ];
+  }
+
   // src/libraries/mda/index.ts
-  async function buildMdaLibrary(_tokens, _page) {
-    return { components: [], sets: [] };
+  async function renderSection2(page, tokens, title, sets, y) {
+    const t = await text(title, "semibold", 24, page);
+    t.x = 40;
+    t.y = y;
+    bindText(t, tokens, "color/text/primary");
+    const { height } = placeGrid(sets, { cols: 2, gap: 64, x: 40, y: y + 48 });
+    return y + 48 + height + 80;
+  }
+  async function buildMdaLibrary(tokens, page) {
+    const header = await text("Model-Driven Apps \u2014 Fluent UI 2", "bold", 40, page);
+    header.x = 40;
+    header.y = 40;
+    bindText(header, tokens, "color/text/primary");
+    const sub = await text("Unified Interface patterns for Dynamics 365 / Power Apps model-driven apps, implemented as real Figma Component Sets with variants.", "regular", 14, page);
+    sub.x = 40;
+    sub.y = 96;
+    sub.textAutoResize = "HEIGHT";
+    sub.resize(1e3, sub.height);
+    bindText(sub, tokens, "color/text/secondary");
+    let y = 160;
+    const all = [];
+    const shell = await buildMdaShell(page, tokens);
+    all.push(...shell);
+    y = await renderSection2(page, tokens, "App Shell", shell, y);
+    const views = await buildMdaViews(page, tokens);
+    all.push(...views);
+    y = await renderSection2(page, tokens, "Views & Grids", views, y);
+    const forms = await buildMdaForms(page, tokens);
+    all.push(...forms);
+    y = await renderSection2(page, tokens, "Forms", forms, y);
+    const dialogs = await buildMdaDialogs(page, tokens);
+    all.push(...dialogs);
+    y = await renderSection2(page, tokens, "Dialogs & Overlays", dialogs, y);
+    const dash = await buildMdaDashboards(page, tokens);
+    all.push(...dash);
+    y = await renderSection2(page, tokens, "Dashboards", dash, y);
+    const admin = await buildMdaAdmin(page, tokens);
+    all.push(...admin);
+    y = await renderSection2(page, tokens, "Admin / Settings", admin, y);
+    return { components: [], sets: all };
   }
 
   // src/libraries/flow/index.ts
