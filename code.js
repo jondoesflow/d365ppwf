@@ -794,8 +794,15 @@ function newScreen(name, device) {
   tag(s, 'screen', {});
   s.setPluginData(K.gridHost, 'true');
   s.layoutGrids = [
-    { pattern: 'COLUMNS', alignment: 'STRETCH', gutterSize: d.gutter, offset: d.margin, count: d.cols, sectionSize: 0, color: hexToRgb(C.accent), visible: true },
-    { pattern: 'ROWS',    alignment: 'STRETCH', gutterSize: 0, offset: 0, count: 1, sectionSize: 0, color: hexToRgb(C.accent), visible: false }
+    {
+      pattern: 'COLUMNS',
+      alignment: 'STRETCH',
+      gutterSize: d.gutter,
+      offset: d.margin,
+      count: d.cols,
+      color: Object.assign({}, hexToRgb(C.accent), { a: 0.1 }),
+      visible: true
+    }
   ];
   return s;
 }
@@ -2554,7 +2561,7 @@ async function toggleAnnotations(show) {
 async function toggleGrid(show) {
   await forEachNode(async (n) => {
     if (n.type === 'FRAME' && n.getPluginData(K.gridHost) === 'true' && n.layoutGrids && n.layoutGrids.length) {
-      const next = n.layoutGrids.map(g => Object.assign({}, g, { visible: !!show && g.pattern === 'COLUMNS' }));
+      const next = n.layoutGrids.map(g => Object.assign({}, g, { visible: !!show }));
       n.layoutGrids = next;
     }
   });
