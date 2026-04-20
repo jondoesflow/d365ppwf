@@ -9,6 +9,7 @@
 import { PD } from './lib/pluginData.js';
 import { preloadFonts } from './lib/fonts.js';
 import { buildTokens, type Tokens } from './lib/tokens.js';
+import { renderTokensPage } from './lib/tokensPage.js';
 import { buildPrimitives } from './lib/primitives.js';
 import { buildCanvasLibrary } from './libraries/canvas/index.js';
 import { buildMdaLibrary } from './libraries/mda/index.js';
@@ -122,6 +123,7 @@ async function run(opts: GenerateOptions, updateOnly: boolean): Promise<void> {
 
   progress(10, 'Building tokens…');
   const tokens: Tokens = await buildTokens();
+  await renderTokensPage(tokens, tokensPage);
 
   progress(20, 'Building primitives…');
   await figma.setCurrentPageAsync(primitivesPage);

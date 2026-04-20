@@ -241,6 +241,208 @@
     };
   }
 
+  // src/lib/layout.ts
+  function frame(name, parent) {
+    const f = figma.createFrame();
+    f.name = name;
+    f.fills = [];
+    if (parent) parent.appendChild(f);
+    return f;
+  }
+  function autoLayout(f, dir, itemSpacing, padding) {
+    f.layoutMode = dir === "h" ? "HORIZONTAL" : "VERTICAL";
+    f.itemSpacing = itemSpacing;
+    if (typeof padding === "number") {
+      f.paddingLeft = padding;
+      f.paddingRight = padding;
+      f.paddingTop = padding;
+      f.paddingBottom = padding;
+    } else {
+      f.paddingLeft = padding.l ?? 0;
+      f.paddingRight = padding.r ?? 0;
+      f.paddingTop = padding.t ?? 0;
+      f.paddingBottom = padding.b ?? 0;
+    }
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "AUTO";
+    return f;
+  }
+  function rect(name, w, h, parent) {
+    const r = figma.createRectangle();
+    r.name = name;
+    r.resizeWithoutConstraints(Math.max(1, w), Math.max(1, h));
+    r.fills = [];
+    if (parent) parent.appendChild(r);
+    return r;
+  }
+  async function text(str, weight, size, parent) {
+    const t = figma.createText();
+    t.fontName = await fontFor(weight);
+    t.fontSize = size;
+    t.characters = str;
+    if (parent) parent.appendChild(t);
+    return t;
+  }
+
+  // src/lib/tokensPage.ts
+  var PAD = 40;
+  async function renderTokensPage(tokens, page) {
+    const header = await text("Power Platform Tokens", "bold", 40, page);
+    header.x = PAD;
+    header.y = PAD;
+    bindTextColor(header, tokens, "color/text/primary");
+    const sub = await text("Every Variable and Style in this kit. Re-skin the library by switching the collection mode from Light to Dark.", "regular", 14, page);
+    sub.x = PAD;
+    sub.y = PAD + 56;
+    bindTextColor(sub, tokens, "color/text/secondary");
+    let cursorY = PAD + 112;
+    cursorY = await renderSectionHeading("Colour", cursorY, tokens, page);
+    const groups = groupColours();
+    for (const [groupName, items] of groups) {
+      const label = await text(groupName.toUpperCase(), "semibold", 11, page);
+      label.x = PAD;
+      label.y = cursorY;
+      bindTextColor(label, tokens, "color/text/secondary");
+      cursorY += 20;
+      const rowFrame = frame("color-row", page);
+      autoLayout(rowFrame, "h", 16, 0);
+      rowFrame.x = PAD;
+      rowFrame.y = cursorY;
+      for (const name of items) {
+        const v = tokens.color.get(name);
+        if (!v) continue;
+        await renderSwatch(name, v, tokens, rowFrame);
+      }
+      cursorY += rowFrame.height + 32;
+    }
+    cursorY = await renderSectionHeading("Typography", cursorY, tokens, page);
+    for (const [name, style] of tokens.type) {
+      const t = await text(`${name} \u2014 The quick brown fox jumps over the lazy dog`, "regular", 14, page);
+      await t.setTextStyleIdAsync(style.id);
+      t.x = PAD;
+      t.y = cursorY;
+      bindTextColor(t, tokens, "color/text/primary");
+      cursorY += t.height + 12;
+    }
+    cursorY += 20;
+    cursorY = await renderSectionHeading("Spacing", cursorY, tokens, page);
+    const spaceRow = frame("space-row", page);
+    autoLayout(spaceRow, "h", 32, 0);
+    spaceRow.counterAxisAlignItems = "MAX";
+    spaceRow.x = PAD;
+    spaceRow.y = cursorY;
+    for (const [name, variable] of tokens.space) {
+      const group = frame(name, spaceRow);
+      autoLayout(group, "v", 6, 0);
+      group.counterAxisAlignItems = "CENTER";
+      const size = Number(variable.valuesByMode[tokens.lightMode]) || 0;
+      const box = rect("box", Math.max(2, size), Math.max(2, size), group);
+      bindFillVar(box, tokens, "color/brand/primary");
+      const labelA = await text(name.replace("space/", ""), "semibold", 11, group);
+      bindTextColor(labelA, tokens, "color/text/primary");
+      const labelB = await text(`${size}px`, "regular", 10, group);
+      bindTextColor(labelB, tokens, "color/text/secondary");
+    }
+    cursorY += spaceRow.height + 40;
+    cursorY = await renderSectionHeading("Radius", cursorY, tokens, page);
+    const radiusRow = frame("radius-row", page);
+    autoLayout(radiusRow, "h", 20, 0);
+    radiusRow.counterAxisAlignItems = "CENTER";
+    radiusRow.x = PAD;
+    radiusRow.y = cursorY;
+    for (const [name, variable] of tokens.radius) {
+      const group = frame(name, radiusRow);
+      autoLayout(group, "v", 6, 0);
+      group.counterAxisAlignItems = "CENTER";
+      const r = Math.min(24, Number(variable.valuesByMode[tokens.lightMode]) || 0);
+      const box = rect("box", 56, 56, group);
+      box.cornerRadius = r;
+      bindFillVar(box, tokens, "color/brand/primary");
+      bindStrokeColorVar(box, tokens, "color/stroke/default");
+      const lab = await text(name.replace("radius/", ""), "semibold", 11, group);
+      bindTextColor(lab, tokens, "color/text/primary");
+    }
+    cursorY += radiusRow.height + 40;
+    cursorY = await renderSectionHeading("Elevation", cursorY, tokens, page);
+    const elevRow = frame("elev-row", page);
+    autoLayout(elevRow, "h", 32, 32);
+    elevRow.x = PAD;
+    elevRow.y = cursorY;
+    for (const [name, style] of tokens.elevation) {
+      const group = frame(name, elevRow);
+      autoLayout(group, "v", 10, 0);
+      group.counterAxisAlignItems = "CENTER";
+      const card = rect("card", 120, 80, group);
+      card.cornerRadius = 6;
+      bindFillVar(card, tokens, "color/canvas/background");
+      bindStrokeColorVar(card, tokens, "color/stroke/subtle");
+      await card.setEffectStyleIdAsync(style.id);
+      const lab = await text(name, "semibold", 11, group);
+      bindTextColor(lab, tokens, "color/text/primary");
+    }
+    cursorY += elevRow.height + 40;
+  }
+  async function renderSectionHeading(title, y, tokens, page) {
+    const t = await text(title, "semibold", 24, page);
+    t.x = PAD;
+    t.y = y;
+    bindTextColor(t, tokens, "color/text/primary");
+    const rule = rect("rule", 1200, 1, page);
+    rule.x = PAD;
+    rule.y = y + 36;
+    bindFillVar(rule, tokens, "color/stroke/subtle");
+    return y + 52;
+  }
+  async function renderSwatch(name, variable, tokens, parent) {
+    const col = frame(name, parent);
+    autoLayout(col, "v", 6, 0);
+    col.counterAxisSizingMode = "FIXED";
+    col.resize(120, col.height);
+    const swatch = rect("bg", 120, 72, col);
+    swatch.cornerRadius = 4;
+    bindFillVar(swatch, tokens, name);
+    bindStrokeColorVar(swatch, tokens, "color/stroke/subtle");
+    const n = await text(name, "semibold", 11, col);
+    bindTextColor(n, tokens, "color/text/primary");
+    const hex = PALETTE[name]?.light ?? "";
+    const v = await text(hex, "regular", 10, col);
+    bindTextColor(v, tokens, "color/text/secondary");
+  }
+  function groupColours() {
+    const groups = { brand: [], canvas: [], stroke: [], text: [], status: [], flow: [] };
+    for (const name of Object.keys(PALETTE)) {
+      for (const key of Object.keys(groups)) {
+        if (name.startsWith(`color/${key}/`)) {
+          groups[key].push(name);
+          break;
+        }
+      }
+    }
+    return Object.entries(groups);
+  }
+  function bindFillVar(node, tokens, key) {
+    const v = tokens.color.get(key);
+    if (!v) return;
+    const paint = { type: "SOLID", color: { r: 0, g: 0, b: 0 } };
+    const bound = figma.variables.setBoundVariableForPaint(paint, "color", v);
+    node.fills = [bound];
+  }
+  function bindStrokeColorVar(node, tokens, key) {
+    const v = tokens.color.get(key);
+    if (!v) return;
+    const paint = { type: "SOLID", color: { r: 0, g: 0, b: 0 } };
+    const bound = figma.variables.setBoundVariableForPaint(paint, "color", v);
+    node.strokes = [bound];
+    node.strokeWeight = 1;
+  }
+  function bindTextColor(node, tokens, key) {
+    const v = tokens.color.get(key);
+    if (!v) return;
+    const paint = { type: "SOLID", color: { r: 0, g: 0, b: 0 } };
+    const bound = figma.variables.setBoundVariableForPaint(paint, "color", v);
+    node.fills = [bound];
+  }
+
   // src/lib/primitives.ts
   async function buildPrimitives(_tokens, _page) {
     return { components: [], sets: [] };
@@ -342,6 +544,7 @@
     }
     progress(10, "Building tokens\u2026");
     const tokens = await buildTokens();
+    await renderTokensPage(tokens, tokensPage);
     progress(20, "Building primitives\u2026");
     await figma.setCurrentPageAsync(primitivesPage);
     const prim = await buildPrimitives(tokens, primitivesPage);
