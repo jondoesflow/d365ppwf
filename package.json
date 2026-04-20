@@ -1,0 +1,17 @@
+{
+  "name": "d365ppwf",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Figma plugin that generates a reusable Power Platform wireframe component library (Canvas Apps, Model-Driven Apps, Power Automate).",
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.108.0",
+    "esbuild": "^0.23.1",
+    "typescript": "^5.5.4"
+  }
+}
