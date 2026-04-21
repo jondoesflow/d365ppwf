@@ -1,5 +1,25 @@
 "use strict";
 (() => {
+  var __defProp = Object.defineProperty;
+  var __defProps = Object.defineProperties;
+  var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+  var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __propIsEnum = Object.prototype.propertyIsEnumerable;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __spreadValues = (a, b) => {
+    for (var prop in b || (b = {}))
+      if (__hasOwnProp.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    if (__getOwnPropSymbols)
+      for (var prop of __getOwnPropSymbols(b)) {
+        if (__propIsEnum.call(b, prop))
+          __defNormalProp(a, prop, b[prop]);
+      }
+    return a;
+  };
+  var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+
   // src/lib/pluginData.ts
   var PD = {
     nodeId: "ppwf:nodeId",
@@ -114,7 +134,7 @@
     return { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
   }
   function hexToRgba(hex, a = 1) {
-    return { ...hexToRgb(hex), a };
+    return __spreadProps(__spreadValues({}, hexToRgb(hex)), { a });
   }
 
   // src/lib/tokens.ts
@@ -268,6 +288,7 @@
     return f;
   }
   function autoLayout(f, dir, itemSpacing, padding) {
+    var _a, _b, _c, _d;
     f.layoutMode = dir === "h" ? "HORIZONTAL" : "VERTICAL";
     f.itemSpacing = itemSpacing;
     if (typeof padding === "number") {
@@ -276,10 +297,10 @@
       f.paddingTop = padding;
       f.paddingBottom = padding;
     } else {
-      f.paddingLeft = padding.l ?? 0;
-      f.paddingRight = padding.r ?? 0;
-      f.paddingTop = padding.t ?? 0;
-      f.paddingBottom = padding.b ?? 0;
+      f.paddingLeft = (_a = padding.l) != null ? _a : 0;
+      f.paddingRight = (_b = padding.r) != null ? _b : 0;
+      f.paddingTop = (_c = padding.t) != null ? _c : 0;
+      f.paddingBottom = (_d = padding.b) != null ? _d : 0;
     }
     f.primaryAxisSizingMode = "AUTO";
     f.counterAxisSizingMode = "AUTO";
@@ -310,18 +331,19 @@
     return t;
   }
   function placeGrid(items, opts = {}) {
-    const cols = opts.cols ?? 4;
-    const gap = opts.gap ?? 64;
-    const x0 = opts.x ?? 0;
-    const y0 = opts.y ?? 0;
+    var _a, _b, _c, _d, _e, _f;
+    const cols = (_a = opts.cols) != null ? _a : 4;
+    const gap = (_b = opts.gap) != null ? _b : 64;
+    const x0 = (_c = opts.x) != null ? _c : 0;
+    const y0 = (_d = opts.y) != null ? _d : 0;
     const rowHeights = [];
     const colWidths = [];
     for (let i = 0; i < items.length; i++) {
       const r2 = Math.floor(i / cols);
       const c2 = i % cols;
       const node = items[i];
-      rowHeights[r2] = Math.max(rowHeights[r2] ?? 0, node.height);
-      colWidths[c2] = Math.max(colWidths[c2] ?? 0, node.width);
+      rowHeights[r2] = Math.max((_e = rowHeights[r2]) != null ? _e : 0, node.height);
+      colWidths[c2] = Math.max((_f = colWidths[c2]) != null ? _f : 0, node.width);
     }
     let totalW = 0;
     for (const w of colWidths) totalW += w + gap;
@@ -448,6 +470,7 @@
     return y + 52;
   }
   async function renderSwatch(name, variable, tokens, parent) {
+    var _a, _b;
     const col = frame(name, parent);
     autoLayout(col, "v", 6, 0);
     col.counterAxisSizingMode = "FIXED";
@@ -458,7 +481,7 @@
     bindStrokeColorVar(swatch, tokens, "color/stroke/subtle");
     const n = await text(name, "semibold", 11, col);
     bindTextColor(n, tokens, "color/text/primary");
-    const hex = PALETTE[name]?.light ?? "";
+    const hex = (_b = (_a = PALETTE[name]) == null ? void 0 : _a.light) != null ? _b : "";
     const v = await text(hex, "regular", 10, col);
     bindTextColor(v, tokens, "color/text/secondary");
   }
@@ -3094,6 +3117,7 @@
 
   // src/libraries/mda/forms.ts
   async function buildField(page, tokens, name, opts, docs, key) {
+    var _a, _b, _c, _d, _e;
     const variants = [];
     const states = ["Default", "Focus", "Readonly", "Disabled"];
     for (const st of states) {
@@ -3101,7 +3125,7 @@
       autoLayout(f, "v", 4, 0);
       f.primaryAxisSizingMode = "AUTO";
       f.counterAxisSizingMode = "FIXED";
-      f.resize(opts.width ?? 320, 1);
+      f.resize((_a = opts.width) != null ? _a : 320, 1);
       const lbl = await text(opts.label + (opts.required ? " *" : ""), "semibold", 12, f);
       bindText(lbl, tokens, st === "Disabled" ? "color/text/disabled" : "color/text/secondary");
       const box = frame("box", f);
@@ -3109,12 +3133,12 @@
       box.primaryAxisSizingMode = "FIXED";
       box.counterAxisSizingMode = "FIXED";
       box.counterAxisAlignItems = "CENTER";
-      box.resize(opts.width ?? 320, opts.multiline ? 72 : 32);
+      box.resize((_b = opts.width) != null ? _b : 320, opts.multiline ? 72 : 32);
       const bgKey = st === "Readonly" ? "color/canvas/surface" : st === "Disabled" ? "color/canvas/surface-alt" : "color/canvas/background";
       bindFill(box, tokens, bgKey);
       const borderKey = st === "Focus" ? "color/brand/primary" : "color/stroke/default";
       if (opts.appearance === "underline") {
-        const ln = rect("underline", opts.width ?? 320, st === "Focus" ? 2 : 1, box);
+        const ln = rect("underline", (_c = opts.width) != null ? _c : 320, st === "Focus" ? 2 : 1, box);
         ln.layoutPositioning = "ABSOLUTE";
         ln.x = 0;
         ln.y = 31;
@@ -3123,7 +3147,7 @@
         bindStroke(box, tokens, borderKey, st === "Focus" ? 2 : 1);
         box.cornerRadius = 4;
       }
-      const val = await text(opts.value ?? opts.placeholder ?? "Value", "regular", 13, box);
+      const val = await text((_e = (_d = opts.value) != null ? _d : opts.placeholder) != null ? _e : "Value", "regular", 13, box);
       bindText(val, tokens, opts.value ? st === "Disabled" ? "color/text/disabled" : "color/text/primary" : "color/text/secondary");
       if (opts.trailingIcon) {
         const pad = rect("pad", 1, 1, box);
@@ -3138,7 +3162,7 @@
       purpose: `${opts.label} form field.`,
       pp: name,
       docs
-    }, key ?? name.toLowerCase().replace(/\s+/g, "-"));
+    }, key != null ? key : name.toLowerCase().replace(/\s+/g, "-"));
   }
   async function buildMdaFormFields(page, tokens) {
     const sets = [];
@@ -4429,7 +4453,7 @@
   async function buildFlowCardSet(tokens, spec) {
     const variants = [];
     for (const state of ["Default", "Selected", "Error"]) {
-      const f = await buildFlowCardInto(tokens, void 0, { ...spec, state });
+      const f = await buildFlowCardInto(tokens, void 0, __spreadProps(__spreadValues({}, spec), { state }));
       f.name = `State=${state}`;
       variants.push(figma.createComponentFromNode(f));
     }

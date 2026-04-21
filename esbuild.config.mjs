@@ -7,7 +7,7 @@ const watch = process.argv.includes('--watch');
 const common = {
   bundle: true,
   format: 'iife',
-  target: 'es2020',
+  target: 'es2017',
   platform: 'browser',
   logLevel: 'info',
 };
